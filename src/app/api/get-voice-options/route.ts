@@ -1,0 +1,23 @@
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+
+const client = new ElevenLabsClient({ apiKey: process.env.NEXT_PUBLIC_ELEVEN_LABS_API_KEY });
+
+export async function GET() {
+  
+  try {
+  const availableVoices = await client.voices.search({
+    includeTotalCount: true
+  });
+  return Response.json({
+    success: true,
+    voices: availableVoices.voices.map((voice) => ({
+        voiceId: voice.voiceId,
+        name: voice.name
+    }))
+  });
+
+} catch (error) {
+  console.error("Error getting voices", error)
+  return Response.json({success: false, message: "Error getting voices"}, {status: 500})   
+}
+}

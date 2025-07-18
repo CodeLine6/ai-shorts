@@ -9,8 +9,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Next Auth Boilerplate",
-  description: "Fully functional Next Auth Boilerplate",
+  title: process.env.NEXT_PUBLIC_APP_NAME,
+  description: "",
 };
 
 export default function RootLayout({

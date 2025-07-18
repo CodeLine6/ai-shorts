@@ -10,39 +10,42 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 declare module "next-auth" {
     interface User {
         id: string;
-        isVerified?: boolean;
-        username?: string;
-        firstName?: string;
-        lastName?: string;
-        contactNumber?: string;
+        isVerified: boolean;
+        username: string;
+        firstName: string;
+        lastName: string;
+        contactNumber: string;
         email: string;
         image?: string;
+        credits: number
     }
 }
 
 declare module "next-auth/jwt" {
     interface JWT {
-        _id?: string;
-        isVerified?: boolean;
-        username?: string;
-        firstName?: string;
-        lastName?: string;
-        contactNumber?: string;
-        email?: string;
+        _id: string;
+        isVerified: boolean;
+        username: string;
+        firstName: string;
+        lastName: string;
+        contactNumber: string;
+        email: string;
         image?: string;
+        credits: number
     }
 }
 declare module "next-auth" {
     interface Session {
         user: {
-            _id?: string;
-            isVerified?: boolean;
-            username?: string;
-            firstName?: string;
-            lastName?: string;
-            contactNumber?: string;
-            email?: string;
+            _id: string;
+            isVerified: boolean;
+            username: string;
+            firstName: string;
+            lastName: string;
+            contactNumber: string;
+            email: string;
             image?: string;
+            credits: number
         }
     }
 }
@@ -73,8 +76,8 @@ export const authOptions : AuthOptions = {
                         const expiryDate = new Date();
                         expiryDate.setHours(expiryDate.getHours() + 1);
 
-                        await convex.mutation(api.user.UpdateUserById, {
-                            id: user._id,
+                        await convex.mutation(api.user.UpdateUser, {
+                            username: user.username,
                             verifyCode,
                             verifyCodeExpiry: expiryDate.toISOString()
                         });
@@ -92,7 +95,8 @@ export const authOptions : AuthOptions = {
                         username: user.username,
                         firstName: user.firstName,
                         lastName: user.lastName,
-                        contactNumber: user.contactNumber
+                        contactNumber: user.contactNumber,
+                        credits: user.credits
                     }    
                 }
                 catch (error) {
@@ -105,9 +109,6 @@ export const authOptions : AuthOptions = {
     callbacks: {
         async jwt({ token, user, trigger, session}) {
 
-            console.log('JWT Callback - Token:', token)
-            console.log('JWT Callback - User:', user)
-
             if(user) {
                 token._id  = user.id.toString()
                 token.isVerified = user.isVerified
@@ -116,7 +117,8 @@ export const authOptions : AuthOptions = {
                 token.firstName = user.firstName
                 token.lastName = user.lastName
                 token.image = user.image
-                token.contactNumber = user.contactNumber
+                token.contactNumber = user.contactNumber,
+                token.credits = user.credits
             }
 
             if(trigger === "update" && session) {
@@ -133,7 +135,8 @@ export const authOptions : AuthOptions = {
                 session.user.firstName = token.firstName
                 session.user.lastName = token.lastName
                 session.user.image = token.image
-                session.user.contactNumber = token.contactNumber
+                session.user.contactNumber = token.contactNumber,
+                session.user.credits = token.credits
             }
             return session
         },

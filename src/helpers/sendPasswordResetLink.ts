@@ -4,9 +4,9 @@ import ResetPasswordLink from "@/emails/ResetPasswordLink";
 export async function sendPasswordResetLink({username,email,resetPasswordToken} : {username: string, email: string, resetPasswordToken: string}) {
     try {
         const sendEmail =  await resend.emails.send({
-            from: "reset@clonestoxx.instantmarket.ing",
+            from: process.env.NEXT_PUBLIC_EMAIL_FROM || "",
             to: email,
-            subject: "Clonestoxx | Reset Password",
+            subject: `${process.env.NEXT_PUBLIC_APP_NAME} | Reset Password`,
             react: ResetPasswordLink({username, resetPasswordToken}),
         })
         if(!sendEmail.data && sendEmail.error) {

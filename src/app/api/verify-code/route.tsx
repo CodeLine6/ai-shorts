@@ -36,8 +36,8 @@ export async function POST(request : NextRequest) {
             })
         }
 
-        await convex.mutation(api.user.UpdateUserById, {
-            id: user._id,
+        await convex.mutation(api.user.UpdateUser, {
+            username: user.username,
             isVerified: true
         });
 

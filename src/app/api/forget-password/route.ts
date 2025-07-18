@@ -1,10 +1,12 @@
 import { sendPasswordResetLink } from "@/helpers/sendPasswordResetLink";
-//import { PrismaClient } from "@prisma/client"
+import { ConvexHttpClient } from "convex/browser";
 import jwt from "jsonwebtoken"
 import { NextRequest } from "next/server";
+import { api } from "../../../../convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request : NextRequest) {
-    //const prisma = new PrismaClient();
     try {
         const {email} = await request.json();
         if(!email) {
@@ -16,13 +18,8 @@ export async function POST(request : NextRequest) {
             })
         }
 
-        /* const user = await prisma.user.findUnique({
-            where: {
-                email
-            }
-        }) */
+       const user = await convex.mutation(api.user.GetUser, {identifier: email})
 
-        const user = {id : 1,email: "test", username: "test"}
         if(!user) {
             return Response.json({
                 success: false,
@@ -32,7 +29,7 @@ export async function POST(request : NextRequest) {
             })
         }
 
-        const resetPasswordToken = jwt.sign({user : {id: user.id, email: user.email}}, process.env.NEXTAUTH_SECRET || "", {expiresIn: "24h"})
+        const resetPasswordToken = jwt.sign({user : {id: user._id, email: user.email}}, process.env.NEXTAUTH_SECRET || "", {expiresIn: "24h"})
         
         // send email with password reset link
         const emailResponse = await sendPasswordResetLink({username: user.username, email: user.email, resetPasswordToken})

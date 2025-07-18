@@ -1,7 +1,11 @@
 //import { PrismaClient } from "@prisma/client"
+import { ConvexHttpClient } from "convex/browser";
 import { GetServerSidePropsContext } from "next";
 import { NextRequest } from "next/server";
 import { ParsedUrlQuery } from 'querystring';
+import { api } from "../../../../../convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 interface RouteParams extends ParsedUrlQuery {
     username: string;
@@ -10,15 +14,18 @@ interface RouteParams extends ParsedUrlQuery {
 export async function POST(request : NextRequest, context : GetServerSidePropsContext<RouteParams>) {
     //const prisma = new PrismaClient()
     
+    
     try {
         const {username} = context.params as RouteParams;
+        const userExists = await convex.mutation(api.user.GetUser, {
+                        identifier: username,
+        });
         /* const userExists = await prisma.user.findUnique({
             where: {
                 username
             }
         }) */
 
-        const userExists = {}
 
         if(!userExists) {
             return Response.json({
@@ -30,18 +37,15 @@ export async function POST(request : NextRequest, context : GetServerSidePropsCo
         }
          
         const { email, contactNumber, firstName, lastName, image } = await request.json()
-        /* const updatedUser = await prisma.user.update({
-            where: {
-                username
-            },
-            data: {
-                email,
-                contactNumber,
-                firstName,
-                lastName,
-                image
-            }
-        }) */
+        
+
+        const updatedUser = await convex.mutation(api.user.UpdateUser, {
+            username,
+            email,
+            contactNumber,
+            firstName,
+            lastName,
+        })
         return Response.json({
             success: true,
             message: "Profile updated successfully"

@@ -1,18 +1,15 @@
 "use server"
 //import { PrismaClient } from "@prisma/client"
 import bcrypt from 'bcrypt'
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '../../convex/_generated/api';
 
-
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const resetPassword = async (userId: string,password :string) => {
-    //const prisma = new PrismaClient()
-    try {
-        /* const user = await prisma.user.findUnique({
-            where: {
-                id: userId
-            }
-        }) */
 
-        const user = {id: 1, email: "test", username: "test", firstName: "John", lastName:"Doe"}
+    try {
+        
+        const user = await convex.mutation(api.user.GetUserById, {id: userId})
 
         if(!user) {
             return {
@@ -22,14 +19,7 @@ const resetPassword = async (userId: string,password :string) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        /* const updatedUser = await prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-                password: hashedPassword
-            }
-        }) */
+        const updatedUser = await convex.mutation(api.user.UpdateUser, {username: user.username, newHashedPassword: hashedPassword})
 
         return {
             success: true,
