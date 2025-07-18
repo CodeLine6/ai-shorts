@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation,query } from "./_generated/server";
 
 export const CreateNewUser = mutation({
     args : {
@@ -146,7 +146,7 @@ export const UpdateUserCredits = mutation({
     }
 });
 
-export const GetUserById = query({
+export const GetUserById = mutation({
     args: {
         userId: v.id('users')
     },
