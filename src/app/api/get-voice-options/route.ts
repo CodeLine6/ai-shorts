@@ -1,6 +1,6 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
-const client = new ElevenLabsClient({ apiKey: process.env.NEXT_PUBLIC_ELEVEN_LABS_API_KEY });
+const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN_LABS_API_KEY });
 
 export async function GET() {
   
