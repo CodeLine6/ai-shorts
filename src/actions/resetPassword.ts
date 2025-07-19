@@ -27,7 +27,7 @@ const resetPassword = async (userId: string,password :string) => {
         }
     }
     catch(err : any) {
-        console.error("Error resetting password", err.message)
+        console.log("Error resetting password", err.message)
         return {
             success: false,
             message: "Error resetting password. Please try again"

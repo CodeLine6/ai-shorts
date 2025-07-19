@@ -33,21 +33,12 @@ const ForgetPassword = () => {
             const response = await axios.post("/api/forget-password", {
                 email: data.email
             })
-
-            if (response.data.success) setResetPasswordLinkSent(true)
-
-            else {
-                toast({
-                    title: "Error Completing Reset Request",
-                    description: response.data.message,
-                    variant: "destructive"
-                })
-            }
+            setResetPasswordLinkSent(true)
         }
         catch (error) {
             const err = error as AxiosError
             let errorMessage = err?.response?.statusText
-
+            console.log("error", err.response?.data)
             if (errorMessage) {
                 toast({
                     title: "Error Completing Reset Request",

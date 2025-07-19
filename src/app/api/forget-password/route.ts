@@ -18,7 +18,7 @@ export async function POST(request : NextRequest) {
             })
         }
 
-       const user = await convex.mutation(api.user.GetUser, {identifier: email})
+       const user = await convex.query(api.user.GetUser, {identifier: email})
 
         if(!user) {
             return Response.json({
@@ -34,6 +34,7 @@ export async function POST(request : NextRequest) {
         // send email with password reset link
         const emailResponse = await sendPasswordResetLink({username: user.username, email: user.email, resetPasswordToken})
         if(!emailResponse.success) {
+            console.log("Error sending password reset link", emailResponse.message)
             return Response.json({
                 success: false,
                 message: emailResponse.message
@@ -51,7 +52,7 @@ export async function POST(request : NextRequest) {
     }
 
     catch(error) {
-        console.error("Error completing password forget request", error)
+        console.log("Error completing password forget request", error)
         return Response.json({
             success: false,
             message: "Error completing password forget request"

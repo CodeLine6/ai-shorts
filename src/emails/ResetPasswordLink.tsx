@@ -29,7 +29,7 @@ export default function ResetPasswordLink({ username, resetPasswordToken } : { u
             </Row>
             <Row>
                 <Button
-                    href={`http://localhost:3000/reset-password/${resetPasswordToken}`}
+                    href={`${process.env.NEXTAUTH_URL}/reset-password/${resetPasswordToken}`}
                     style={{ color: '#0016ff' }}
                 >
                     Reset Password

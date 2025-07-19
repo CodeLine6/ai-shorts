@@ -16,7 +16,7 @@ export async function sendPasswordResetLink({username,email,resetPasswordToken} 
     }
 
     catch(err){
-        console.error("Error sending password reset link", err)
+        console.log("Error sending password reset link", err)
         return {success: false,message: "Error sending password reset link"}
     }
 }

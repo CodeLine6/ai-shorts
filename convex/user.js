@@ -107,19 +107,34 @@ export const UpdateUser = mutation({
             await db.patch(existingUser._id, updates);
             return { success: true, message: "User updated successfully." };
         } catch (err) {
-            console.error("Error updating user:", err);
+            console.log("Error updating user:", err);
             return { success: false, message: "Failed to update user." };
         }
     }
 });
 
-export const GetUser = mutation({
+export const GetUser = query({
     args : {
         identifier: v.string(),
     },
     handler : async ({db}, {identifier}) => {
-        const user = await db.query("users").filter(q => q.eq(q.field("username"), identifier) || q.eq(q.field("email"), identifier)).first();
-        return user;
+         const normalizedIdentifier = identifier.toLowerCase().trim();
+
+        // Try to find user by username first
+        const userByUsername = await db.query("users")
+            .filter(q => q.eq(q.field("username"), normalizedIdentifier))
+            .first();
+
+        if (userByUsername) {
+            return userByUsername;
+        }
+
+        // If not found by username, try to find by email
+        const userByEmail = await db.query("users")
+            .filter(q => q.eq(q.field("email"), normalizedIdentifier))
+            .first();
+
+        return userByEmail; // This will be null if neither is found
     }
 })
 
@@ -128,7 +143,13 @@ export const CheckUsernameAvailability = mutation({
         username: v.string(),
     },
     handler : async ({db}, {username}) => {
-        const existingUserByUsername = await db.query("users").filter(q => q.eq(q.field("username"), username) && q.eq(q.field("isVerified"), true)).first();
+        const normalizedUsername = username.toLowerCase().trim(); // Add normalization
+
+        const existingUserByUsername = await db.query("users")
+            .withIndex("by_username", q => q.eq("username", normalizedUsername)) // Use the new index
+            .filter(q => q.eq(q.field("isVerified"), true)) // Apply the second filter
+            .first();
+            
         return existingUserByUsername;
     }
 })

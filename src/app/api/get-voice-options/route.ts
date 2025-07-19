@@ -17,7 +17,7 @@ export async function GET() {
   });
 
 } catch (error) {
-  console.error("Error getting voices", error)
+  console.log("Error getting voices", error)
   return Response.json({success: false, message: "Error getting voices"}, {status: 500})   
 }
 }

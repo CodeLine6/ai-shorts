@@ -14,7 +14,9 @@ export default defineSchema({
         credits:v.number(),
         verifyCode:v.string(),
         verifyCodeExpiry:v.string(),
-    }),
+    }).index("by_email", ["email"])
+  .index("by_username", ["username"]),
+  
     videoData : defineTable({
         title: v.string(),
         topic: v.string(),

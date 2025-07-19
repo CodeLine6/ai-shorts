@@ -54,7 +54,7 @@ export async function POST(request : NextRequest, context : GetServerSidePropsCo
         })
     }
     catch (error) {
-        console.error("Error updating profile", error)
+        console.log("Error updating profile", error)
         return Response.json({
             success: false,
             message: "Error updating profile"

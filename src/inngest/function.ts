@@ -73,7 +73,7 @@ export const GenerateVideoData = inngest.createFunction(
 
        if (!response.ok) {
          const errorText = await response.text();
-         console.error("ElevenLabs API error:", errorText);
+         console.log("ElevenLabs API error:", errorText);
          throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
        }
 
@@ -99,7 +99,7 @@ export const GenerateVideoData = inngest.createFunction(
        };
      }
      catch (error) {
-       console.error("Error generating audio file:", error);
+       console.log("Error generating audio file:", error);
        throw error;
      }
     });
@@ -163,7 +163,7 @@ export const GenerateVideoData = inngest.createFunction(
 
         return subtitles;
       } catch (error) {
-        console.error("Error uploading audio:", error);
+        console.log("Error uploading audio:", error);
         return {
           error: "Failed to upload audio file",
           //@ts-ignore

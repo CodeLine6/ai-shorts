@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     }
     catch(error) {
-        console.error("Error registering user", error);
+        console.log("Error registering user", error);
         return Response.json({
             success: false,
             message: "Error registering user"
