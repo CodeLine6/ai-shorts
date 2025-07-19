@@ -27,7 +27,7 @@ const MenuItems = [
     {
         label: 'Billing',
         icon: WalletCards,
-        link: '#'
+        link: '/dashboard/billing'
     }
 ]
 

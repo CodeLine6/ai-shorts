@@ -1,0 +1,6 @@
+[[plugins]]
+package = "netlify-plugin-inngest"
+
+  [plugins.inputs]
+    host = "https://aishorts.instantmarket.ing/"
+    path = "/api/inngest"

@@ -256,7 +256,7 @@ export const GenerateVideoData = inngest.createFunction(
             );
 
             return {
-              image: `https://50cb1v0h-3000.inc1.devtunnels.ms/${recordId}/images/${imageName}`,
+              image: `${process.env.NEXTAUTH_URL}/${recordId}/images/${imageName}`,
               start,
               duration,
             };
@@ -277,7 +277,7 @@ export const GenerateVideoData = inngest.createFunction(
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
         audioUrl:
-          `https://50cb1v0h-3000.inc1.devtunnels.ms/${recordId}/audio/${GenerateAudioFile.fileName}`,
+          `${process.env.NEXTAUTH_URL}/${recordId}/audio/${GenerateAudioFile.fileName}`,
         captionJson: GenerateCaptions.result.transcription.sentences,
         images: GenerateImages,
         });
@@ -305,7 +305,7 @@ export const GenerateVideoData = inngest.createFunction(
         inputProps: {
           videoData: {
             audioUrl:
-              `https://50cb1v0h-3000.inc1.devtunnels.ms/${recordId}/audio/${GenerateAudioFile.fileName}`,
+              `${process.env.NEXTAUTH_URL}/${recordId}/audio/${GenerateAudioFile.fileName}`,
             captionJson: GenerateCaptions.result.transcription.sentences,
             images: GenerateImages,
             // @ts-ignore
