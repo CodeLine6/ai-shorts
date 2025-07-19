@@ -17,7 +17,7 @@ export async function POST(request : NextRequest, context : GetServerSidePropsCo
     
     try {
         const {username} = context.params as RouteParams;
-        const userExists = await convex.mutation(api.user.GetUser, {
+        const userExists = await convex.query(api.user.GetUser, {
                         identifier: username,
         });
         /* const userExists = await prisma.user.findUnique({

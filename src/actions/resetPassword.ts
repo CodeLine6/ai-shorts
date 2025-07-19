@@ -9,8 +9,7 @@ const resetPassword = async (userId: string,password :string) => {
 
     try {
         
-        const user = await convex.mutation(api.user.GetUserById, {id: userId})
-
+        const user = await convex.mutation(api.user.GetUserById, {userId})
         if(!user) {
             return {
                 success: false,

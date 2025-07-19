@@ -149,7 +149,7 @@ export const CheckUsernameAvailability = mutation({
             .withIndex("by_username", q => q.eq("username", normalizedUsername)) // Use the new index
             .filter(q => q.eq(q.field("isVerified"), true)) // Apply the second filter
             .first();
-            
+
         return existingUserByUsername;
     }
 })
@@ -169,10 +169,10 @@ export const UpdateUserCredits = mutation({
 
 export const GetUserById = mutation({
     args: {
-        userId: v.id('users')
+        userId: v.string()
     },
     handler: async({db}, args) => {
-        const user = await db.get(args.userId);
+        const user = await db.query("users").filter(q => q.eq(q.field("_id"), args.userId)).first();
         return user;
     }
 });

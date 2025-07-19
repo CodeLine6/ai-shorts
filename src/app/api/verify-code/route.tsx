@@ -7,7 +7,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 export async function POST(request : NextRequest) {
     try {
         const { username, code } = await request.json()
-        const user = await convex.mutation(api.user.GetUser, {
+        const user = await convex.query(api.user.GetUser, {
                 identifier: username,
         });
         if (!user) {

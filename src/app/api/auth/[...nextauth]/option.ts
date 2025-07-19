@@ -62,7 +62,7 @@ export const authOptions : AuthOptions = {
                 if (!credentials) return null
 
                  try {
-                    const user = await convex.mutation(api.user.GetUser, {
+                    const user = await convex.query(api.user.GetUser, {
                             identifier: credentials.identifier,
                     });
 
