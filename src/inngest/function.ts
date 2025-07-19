@@ -81,7 +81,7 @@ export const GenerateVideoData = inngest.createFunction(
        const audioBufferNode = Buffer.from(audioBuffer);
 
        // Define the directory and filename
-       const audioDir = path.join(process.cwd(), "public", recordId, "audio");
+       const audioDir = path.join("public", recordId, "audio");
        const fileName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "audio"}-${Date.now()}.mp3`;
        const filePath = path.join(audioDir, fileName);
 
@@ -202,7 +202,7 @@ export const GenerateVideoData = inngest.createFunction(
 
     const GenerateImages = await step.run("GenerateImages", async () => {
       let images = [];
-      const filePath = path.join(process.cwd(), "public", recordId, "images");
+      const filePath = path.join("public", recordId, "images");
       await fspromises.mkdir(filePath, { recursive: true });
 
       images = await Promise.all(
