@@ -63,7 +63,7 @@ function page() {
 
         // Fetch the updated user data from Convex to get the new credit balance
         //@ts-ignore
-        const updatedUser = await convex.query(api.user.GetUserById, { userId: user._id });
+        const updatedUser = await convex.mutation(api.user.GetUserById, { userId: user._id });
 
         if (updatedUser) {
             await update({
