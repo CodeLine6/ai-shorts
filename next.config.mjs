@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['50cb1v0h-3000.inc1.devtunnels.ms'],
+        domains: ['50cb1v0h-3000.inc1.devtunnels.ms','ltdxxqeuuoibizgjzxqo.supabase.co'],
     },
     eslint: {
     // Warning: This allows production builds to successfully complete even if

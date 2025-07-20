@@ -27,7 +27,7 @@ const PlayVideo = () => {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
         <div>
-            <RemotionPlayer videoData={videoData} />
+            {videoData && videoData.captionJson  && <RemotionPlayer videoData={videoData} />}
         </div>
         <div>
             <VIdeoInfo videoData={videoData} />

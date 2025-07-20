@@ -49,11 +49,11 @@ export const GenerateVideoData = inngest.createFunction(
     // Generate Audio File MP3
      const GenerateAudioFile = await step.run("GenerateAudioFile", async () => {
      const VOICE_ID =  voice.voiceId;
-     
+      
      try {
        console.log("Making ElevenLabs API request...");
-       
-       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+        
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
          method: 'POST',
          headers: {
            'xi-api-key': process.env.ELEVEN_LABS_API_KEY!, // Assert non-null
@@ -100,6 +100,7 @@ export const GenerateVideoData = inngest.createFunction(
          .getPublicUrl(audioPathInStorage);
 
        console.log(`Audio file uploaded to: ${publicUrlData.publicUrl}`);
+     
 
        return {
          fileName,
