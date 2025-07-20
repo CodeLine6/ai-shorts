@@ -1,8 +1,7 @@
 import { pollForResult } from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
-import { promises as fspromises } from "node:fs";
-import path from "node:path";
+import { supabase } from "@/lib/supabase"; // Import Supabase client
 import {
   gemini,
   config,
@@ -57,7 +56,7 @@ export const GenerateVideoData = inngest.createFunction(
        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
          method: 'POST',
          headers: {
-           'xi-api-key': process.env.ELEVEN_LABS_API_KEY,
+           'xi-api-key': process.env.ELEVEN_LABS_API_KEY!, // Assert non-null
            'Content-Type': 'application/json',
            'Accept': 'audio/mpeg'
          },
@@ -80,21 +79,31 @@ export const GenerateVideoData = inngest.createFunction(
        const audioBuffer = await response.arrayBuffer();
        const audioBufferNode = Buffer.from(audioBuffer);
 
-       // Define the directory and filename
-       const audioDir = path.join("public", recordId, "audio");
        const fileName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "audio"}-${Date.now()}.mp3`;
-       const filePath = path.join(audioDir, fileName);
+       const audioPathInStorage = `${recordId}/audio/${fileName}`;
 
-       // Ensure the directory exists
-       await fspromises.mkdir(audioDir, { recursive: true });
+       // Upload audio to Supabase Storage
+       const { data: uploadData, error: uploadError } = await supabase.storage
+         .from('media') // Assuming you have a bucket named 'media'
+         .upload(audioPathInStorage, audioBufferNode, {
+           contentType: 'audio/mpeg',
+           upsert: false, // Set to true if you want to overwrite existing files
+         });
 
-       // Save audio to disk
-       await fspromises.writeFile(filePath, audioBufferNode);
-       console.log(`Audio file saved to: ${filePath}`);
+       if (uploadError) {
+         console.error("Supabase upload error:", uploadError);
+         throw new Error(`Supabase upload error: ${uploadError.message}`);
+       }
+
+       const { data: publicUrlData } = supabase.storage
+         .from('media')
+         .getPublicUrl(audioPathInStorage);
+
+       console.log(`Audio file uploaded to: ${publicUrlData.publicUrl}`);
 
        return {
          fileName,
-         filePath,
+         filePath: publicUrlData.publicUrl, // Store the public URL
          audioBuffer: audioBufferNode,
        };
      }
@@ -112,15 +121,13 @@ export const GenerateVideoData = inngest.createFunction(
         "x-gladia-key": process.env.NEXT_PUBLIC_GLADIA_API_KEY,
       };
       try {
-        // Read the audio file from disk
-
-        const audioBuffer = await fspromises.readFile(
-          GenerateAudioFile.filePath
-        );
+        // Fetch the audio file from the public URL
+        const audioResponse = await axios.get(GenerateAudioFile.filePath, { responseType: 'arraybuffer' });
+        const audioBuffer = Buffer.from(audioResponse.data);
 
         // Create FormData
         const formData = new FormData();
-        const audioBlob = new Blob([audioBuffer], { type: "audio/mp3" });
+        const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
         formData.append("audio", audioBlob, GenerateAudioFile.fileName);
 
         // Make the API request
@@ -202,8 +209,6 @@ export const GenerateVideoData = inngest.createFunction(
 
     const GenerateImages = await step.run("GenerateImages", async () => {
       let images = [];
-      const filePath = path.join("public", recordId, "images");
-      await fspromises.mkdir(filePath, { recursive: true });
 
       images = await Promise.all(
         GenerateImagePrompt.map(
@@ -226,10 +231,27 @@ export const GenerateVideoData = inngest.createFunction(
             //@ts-ignore
             const imageBuffer = Buffer.from(base64, "base64");
 
-            // save image to disk
             const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}.png`;
-            const imagePath = path.join(filePath, imageName);
-            await fspromises.writeFile(imagePath, imageBuffer);
+            const imagePathInStorage = `${recordId}/images/${imageName}`;
+
+            // Upload image to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('media') // Assuming you have a bucket named 'media'
+              .upload(imagePathInStorage, imageBuffer, {
+                contentType: 'image/png',
+                upsert: false, // Set to true if you want to overwrite existing files
+              });
+
+            if (uploadError) {
+              console.error("Supabase image upload error:", uploadError);
+              throw new Error(`Supabase image upload error: ${uploadError.message}`);
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from('media')
+              .getPublicUrl(imagePathInStorage);
+
+            console.log(`Image file uploaded to: ${publicUrlData.publicUrl}`);
 
             const relatedTranscript =
               GenerateCaptions.result.transcription.sentences.filter(
@@ -256,7 +278,7 @@ export const GenerateVideoData = inngest.createFunction(
             );
 
             return {
-              image: `${process.env.NEXTAUTH_URL}/${recordId}/images/${imageName}`,
+              image: `${publicUrlData.publicUrl}`,
               start,
               duration,
             };
@@ -276,10 +298,9 @@ export const GenerateVideoData = inngest.createFunction(
       async () => {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
-        audioUrl:
-          `${process.env.NEXTAUTH_URL}/${recordId}/audio/${GenerateAudioFile.fileName}`,
-        captionJson: GenerateCaptions.result.transcription.sentences,
-        images: GenerateImages,
+          audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
+          captionJson: GenerateCaptions.result.transcription.sentences,
+          images: GenerateImages,
         });
       }
     );
@@ -300,12 +321,11 @@ export const GenerateVideoData = inngest.createFunction(
       const result = await renderMediaOnCloudrun({
         serviceName,
         region: "us-east1",
-        serveUrl: process.env.GCP_SERVE_URL,
+        serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
         composition: "youtubeShort",
         inputProps: {
           videoData: {
-            audioUrl:
-              `${process.env.NEXTAUTH_URL}/${recordId}/audio/${GenerateAudioFile.fileName}`,
+            audioUrl: GenerateAudioFile.filePath, // Use Supabase URL
             captionJson: GenerateCaptions.result.transcription.sentences,
             images: GenerateImages,
             // @ts-ignore
@@ -330,7 +350,10 @@ export const GenerateVideoData = inngest.createFunction(
       async () => {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
-          downloadUrl: RenderVideo,
+          audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
+          captionJson: GenerateCaptions.result.transcription.sentences,
+          images: GenerateImages,
+          downloadUrl: RenderVideo || undefined, // Ensure it's string or undefined
         });
       }
     );
