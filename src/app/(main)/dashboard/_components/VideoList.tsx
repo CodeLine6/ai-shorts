@@ -27,26 +27,8 @@ function VideoList() {
       })
 
       setVideoList(userVideoList)
-      const pendingVideos = userVideoList.filter(video => video.status == 'pending')
-      pendingVideos.length && GetPendingVideoStatus(pendingVideos)
-  }
+    }
 
-
-  const GetPendingVideoStatus = (pendingVideos : any[]) => {
-    pendingVideos.forEach((video) => {
-      const intervalId = setInterval(async () => {
-      const videoStatus = await convex.query(api.videoData.GetVideoRecord, {
-        //@ts-ignore
-        recordId: video._id,
-      })
-
-      if(videoStatus?.status == 'completed') {
-        clearInterval(intervalId)
-        GetUserVideoList()
-      }
-    },5000)
-    })
-  }
   return (
     <div>
         {videoList.length == 0 ?
