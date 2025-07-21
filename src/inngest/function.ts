@@ -344,7 +344,7 @@ export const GenerateVideoData = inngest.createFunction(
             data: {
               recordId, // Pass recordId to the webhook
             },
-            webhookProgressInterval: 2, // Add this back as it was in the user's original code
+            webhookProgressInterval: 1, // Add this back as it was in the user's original code
           },
         });
 
