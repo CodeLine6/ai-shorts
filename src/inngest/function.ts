@@ -321,7 +321,7 @@ export const GenerateVideoData = inngest.createFunction(
 
       let renderResult;
       try {
-        renderMediaOnCloudrun({
+       const renderVideo = renderMediaOnCloudrun({
           serviceName,
           region: "us-east1",
           serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
@@ -348,6 +348,11 @@ export const GenerateVideoData = inngest.createFunction(
           },
         });
 
+        Promise.all([
+          renderVideo
+        ]).then(([renderResult]) => {
+          console.log(renderResult);
+        })
         
           console.log(`Remotion render initiated.`);
           return "initiated";
