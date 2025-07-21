@@ -46,6 +46,7 @@ export const UpdateVideoRecord = mutation({
             start: v.number(),
             duration: v.number()
         }))),
+        status: v.optional(v.string()),
         captionJson: v.optional(v.any()),
         downloadUrl: v.optional(v.string())
     },
@@ -54,7 +55,7 @@ export const UpdateVideoRecord = mutation({
             audioUrl: args.audioUrl,
             images: args.images,
             captionJson: args.captionJson,
-            status: 'completed',
+            status: args.status,
             downloadUrl: args.downloadUrl
         });
         return result

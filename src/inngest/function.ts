@@ -407,8 +407,8 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
       await step.run("update-video-record-success", async () => {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
-          downloadUrl
-          // status: "completed", // Removed as it's not in schema
+          downloadUrl,
+          status: "completed", // Removed as it's not in schema
         });
       });
       return { message: "Render completed, database updated" };
