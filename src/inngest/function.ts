@@ -348,11 +348,8 @@ export const GenerateVideoData = inngest.createFunction(
           },
         });
 
-        Promise.all([
-          renderVideo
-        ]).then(([renderResult]) => {
-          console.log(renderResult);
-        })
+
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         
           console.log(`Remotion render initiated.`);
           return "initiated";
