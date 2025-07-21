@@ -378,6 +378,14 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
   async ({ event, step }) => {
     const { recordId, renderId, progress, error } = event.data;
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    const video = await convex.query(api.videoData.GetVideoRecord, {
+      recordId,
+    })
+
+    if (!video) {
+      console.error(`Video record not found for recordId: ${recordId}`);
+      return { message: "Video record not found" };
+    }
 
     console.log(`Remotion render status update for record ${recordId}, render ${renderId}: Progress ${progress}, Error: ${error}`);
 
@@ -386,7 +394,10 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
       await step.run("update-video-record-failed", async () => {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
-          // status: "failed", // Removed as it's not in schema
+          audioUrl: video.audioUrl, // Use the public URL from Supabase
+          captionJson: video.captionJson,
+          images: video.images,
+          status: "failed", // Removed as it's not in schema
           // errorMessage: error, // Removed as it's not in schema
         });
       });
@@ -400,6 +411,9 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
           downloadUrl,
+          audioUrl: video.audioUrl, // Use the public URL from Supabase
+          captionJson: video.captionJson,
+          images: video.images,
           status: "completed", // Removed as it's not in schema
         });
       });
