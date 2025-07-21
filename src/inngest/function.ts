@@ -319,46 +319,102 @@ export const GenerateVideoData = inngest.createFunction(
 
       const serviceName = services[0].serviceName;
 
-      const result = await renderMediaOnCloudrun({
-        serviceName,
-        region: "us-east1",
-        serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
-        composition: "youtubeShort",
-        inputProps: {
-          videoData: {
-            audioUrl: GenerateAudioFile.filePath, // Use Supabase URL
-            captionJson: GenerateCaptions.result.transcription.sentences,
-            images: GenerateImages,
-            // @ts-ignore
-            caption: video.caption,
+      let renderResult;
+      try {
+        renderResult = await renderMediaOnCloudrun({
+          serviceName,
+          region: "us-east1",
+          serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
+          composition: "youtubeShort",
+          inputProps: {
+            videoData: {
+              audioUrl: GenerateAudioFile.filePath, // Use Supabase URL
+              captionJson: GenerateCaptions.result.transcription.sentences,
+              images: GenerateImages,
+              // @ts-ignore
+              caption: video.caption,
+            },
           },
-        },
-        codec: "h264",
-      });
+          codec: "h264",
+          renderStatusWebhook: {
+            url: `${process.env.NEXT_PUBLIC_APP_URL}/api/remotion-webhook`, // Point to the new API route
+            headers: {
+              "Content-Type": "application/json",
+            },
+            data: {
+              recordId, // Pass recordId to the webhook
+            },
+            webhookProgressInterval: 2, // Add this back as it was in the user's original code
+          },
+        });
 
-      if (!(result.type === "success")) {
-        throw new Error(result.message);
+        if (renderResult.type === "success") {
+          console.log(`Remotion render initiated. Render ID: ${renderResult.renderId}`);
+          return { renderId: renderResult.renderId, recordId, status: "initiated" };
+        } else {
+          console.error("Remotion Cloud Run initiation failed:", renderResult.message);
+          // If not success, renderId might not exist.
+          return {
+            renderId: null, // Explicitly null if not success
+            recordId,
+            status: "failed_initiation",
+            message: renderResult.message,
+          };
+        }
+
+      } catch (error) {
+        console.error("Error initiating Remotion render:", error);
+        // If the await itself throws (e.g., network error, or a very fast timeout),
+        // we might not even get a renderId.
+        return {
+          renderId: null,
+          recordId,
+          status: "initiation_error",
+          message: (error as Error).message,
+        };
       }
-
-      console.log(result.bucketName);
-      console.log(result.renderId);
-      return result?.publicUrl;
     });
 
-    // Update Download URL
-    const UpdateDownloadUrl = await step.run(
-      "UpdateDownloadUrl",
-      async () => {
+    // The main function will return the result of RenderVideo step
+    return RenderVideo;
+  }
+);
+
+export const HandleRemotionRenderWebhook = inngest.createFunction(
+  { id: "handle-remotion-render-webhook" },
+  { event: "remotion/render.status" }, // Listen for the event sent by the webhook API route
+  async ({ event, step }) => {
+    const { recordId, renderId, progress, error } = event.data;
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+    console.log(`Remotion render status update for record ${recordId}, render ${renderId}: Progress ${progress}, Error: ${error}`);
+
+    if (error) {
+      console.error(`Remotion render failed for record ${recordId}, render ${renderId}: ${error}`);
+      await step.run("update-video-record-failed", async () => {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
           recordId,
-          audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
-          captionJson: GenerateCaptions.result.transcription.sentences,
-          images: GenerateImages,
-          downloadUrl: RenderVideo || undefined, // Ensure it's string or undefined
+          // status: "failed", // Removed as it's not in schema
+          // errorMessage: error, // Removed as it's not in schema
         });
-      }
-    );
+      });
+      return { message: "Render failed, database updated" };
+    }
 
-    return RenderVideo;
+    if (progress === 1) {
+      const downloadUrl = "https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/"+renderId+"/out.mp4";
+      console.log(`Remotion render completed for record ${recordId}, render ${renderId}. Public URL: ${downloadUrl}`);
+      await step.run("update-video-record-success", async () => {
+        await convex.mutation(api.videoData.UpdateVideoRecord, {
+          recordId,
+          downloadUrl
+          // status: "completed", // Removed as it's not in schema
+        });
+      });
+      return { message: "Render completed, database updated" };
+    }
+
+    // If not completed and no error, just acknowledge the progress update
+    return { message: "Render progress update received" };
   }
 );
