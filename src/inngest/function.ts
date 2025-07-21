@@ -321,7 +321,7 @@ export const GenerateVideoData = inngest.createFunction(
 
       let renderResult;
       try {
-        renderResult = await renderMediaOnCloudrun({
+        renderMediaOnCloudrun({
           serviceName,
           region: "us-east1",
           serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
@@ -337,7 +337,7 @@ export const GenerateVideoData = inngest.createFunction(
           },
           codec: "h264",
           renderStatusWebhook: {
-            url: `${process.env.NEXT_PUBLIC_APP_URL}/api/remotion-webhook`, // Point to the new API route
+            url: `${process.env.NEXTAUTH_URL}/api/remotion-webhook`, // Point to the new API route
             headers: {
               "Content-Type": "application/json",
             },
@@ -348,19 +348,9 @@ export const GenerateVideoData = inngest.createFunction(
           },
         });
 
-        if (renderResult.type === "success") {
-          console.log(`Remotion render initiated. Render ID: ${renderResult.renderId}`);
-          return { renderId: renderResult.renderId, recordId, status: "initiated" };
-        } else {
-          console.error("Remotion Cloud Run initiation failed:", renderResult.message);
-          // If not success, renderId might not exist.
-          return {
-            renderId: null, // Explicitly null if not success
-            recordId,
-            status: "failed_initiation",
-            message: renderResult.message,
-          };
-        }
+        
+          console.log(`Remotion render initiated.`);
+          return "initiated";
 
       } catch (error) {
         console.error("Error initiating Remotion render:", error);
