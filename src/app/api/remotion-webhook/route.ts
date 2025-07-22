@@ -6,6 +6,9 @@ export async function POST(request: Request) {
     const payload = await request.json();
     console.log("Received Remotion webhook payload:", payload);
 
+    if(payload.progress != 1) 
+    return NextResponse.json({ message: "Webhook received and Inngest event sent" }, { status: 200 });
+
     // Send an Inngest event with the webhook payload
     await inngest.send({
       name: "remotion/render.status",
