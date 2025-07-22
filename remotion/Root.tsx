@@ -770,7 +770,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
-        durationInFrames={parseInt((videoData.captionJson[(videoData.captionJson).length - 1].end).toFixed(0)) * 30}
+        durationInFrames={parseInt((videoData.captionJson[videoData.captionJson.length - 1].end).toFixed(0)) * 30}
         fps={30}
         width={720}
         height={1080}

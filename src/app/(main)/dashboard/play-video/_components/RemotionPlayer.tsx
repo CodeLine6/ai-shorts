@@ -8,7 +8,7 @@ const RemotionPlayer = ({ videoData }: { videoData: any }) => {
   return (
     <Player
       component={RemotionComposition}
-      durationInFrames={parseInt((videoData.captionJson[(videoData.captionJson).length - 1].end).toFixed(0)) * 30}
+      durationInFrames={parseInt((videoData.captionJson[videoData.captionJson.length - 1].end).toFixed(0)) * 30}
       fps={30}
       compositionWidth={720}
       compositionHeight={1280}
