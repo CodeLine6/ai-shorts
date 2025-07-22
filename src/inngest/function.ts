@@ -256,10 +256,10 @@ export const GenerateVideoData = inngest.createFunction(
       return images_buffer;
     });
     
-    const UploadToStorage = await step.run("UpdateVideoRecord", async () => {
+    const UploadToStorage = await step.run("UploadToStorage", async () => {
       const imagePaths = await Promise.all(
         GenerateImages.map(async (image, index) => {
-          const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}.png`;
+          const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}-${index}.png`;
           const imagePathInStorage = `${recordId}/images/${imageName}`;
           const imageBuffer = Buffer.from(image.base64, "base64");
 
