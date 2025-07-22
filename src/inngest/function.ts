@@ -218,35 +218,36 @@ export const GenerateVideoData = inngest.createFunction(
             index: number
           ) => {
             const result = await a44Client.images.generate({
-              model: "provider-6/sana-1.5",
-              prompt: prompt.imagePrompt,
+              model: "provider-2/FLUX.1-schnell-v2",
+              prompt: prompt.imagePrompt + " size: 1024x1536",
+              size: "1024x1536",
               response_format: "b64_json",
               output_compression: 50,
             });
 
             const base64 = result.data?.[0].b64_json;
             //@ts-ignore
-            const imageBuffer = Buffer.from(base64, "base64");
-
-            return { imageBuffer, ...prompt };
+            
+            return { base64, ...prompt };
           }
         )
       );
-
+      
       return images_buffer;
     });
-
+    
     const UploadToStorage = await step.run("UpdateVideoRecord", async () => {
       const imagePaths = await Promise.all(
         GenerateImages.map(async (image, index) => {
           const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}.png`;
           const imagePathInStorage = `${recordId}/images/${imageName}`;
+          const imageBuffer = Buffer.from(image.base64, "base64");
 
           // Upload image to Supabase Storage
           const { data: uploadData, error: uploadError } =
             await supabase.storage
               .from("media") // Assuming you have a bucket named 'media'
-              .upload(imagePathInStorage, image.imageBuffer, {
+              .upload(imagePathInStorage, imageBuffer, {
                 contentType: "image/png",
                 upsert: false, // Set to true if you want to overwrite existing files
               });
