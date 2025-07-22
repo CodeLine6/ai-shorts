@@ -218,9 +218,8 @@ export const GenerateVideoData = inngest.createFunction(
             index: number
           ) => {
             const result = await a44Client.images.generate({
-              model: "provider-2/FLUX.1-schnell-v2",
-              prompt: prompt.imagePrompt + " size: 1024x1536",
-              size: "1024x1536",
+              model: "provider-6/sana-1.5",
+              prompt: prompt.imagePrompt,
               response_format: "b64_json",
               output_compression: 50,
             });
