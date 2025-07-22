@@ -307,11 +307,10 @@ export const GenerateVideoData = inngest.createFunction(
               }
             );
 
-          const start = relatedTranscript[0]?.start - 0.3;
-          const end =
-            relatedTranscript[relatedTranscript.length - 1]?.end + 0.3;
+          const start = parseFloat((relatedTranscript[0]?.start - 0.3).toFixed(3));
+          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 0.3).toFixed(3));
 
-          const duration = end - start;
+          const duration = parseFloat((end - start).toFixed(3));
           console.log(`Duration `, duration, " Start: ", start, " End: ", end);
 
           return {
@@ -341,6 +340,16 @@ export const GenerateVideoData = inngest.createFunction(
         recordId,
       });
 
+      if (!video) {
+        console.error(`Video record not found for recordId: ${recordId}`);
+        return {
+          renderId: null,
+          recordId,
+          status: "initiation_error",
+          message: "Video record not found",
+        };
+      }
+
       const services = await getServices({
         region: "us-east1",
         compatibleOnly: true,
@@ -357,10 +366,10 @@ export const GenerateVideoData = inngest.createFunction(
           composition: "youtubeShort",
           inputProps: {
             videoData: {
-              audioUrl: GenerateAudioFile.filePath, // Use Supabase URL
-              captionJson: GenerateCaptions.result.transcription.sentences,
-              images: GenerateImages,
               // @ts-ignore
+              audioUrl: video.audioUrl, // Use Supabase URL
+              captionJson: video.captionJson,
+              images: video.images,
               caption: video.caption,
             },
           },
