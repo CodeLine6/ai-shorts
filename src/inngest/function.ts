@@ -12,6 +12,7 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
 - Do not skip any part of the script
+- Include image style in the image prompt
 - imagePrompt should strictly stick to what is described in sceneContent
 - Do not give camera angles 
 - Follow the following schema and return JSON data (Max 4-5 Images)
