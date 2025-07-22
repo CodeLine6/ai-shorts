@@ -10,8 +10,9 @@ import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
-- Just Give specific image prompts depends on the story line
+- Give accurate image prompts strictly depending on the story line
 - Do not skip any part of the script
+- imagePrompt should strictly stick to what is described in sceneContent
 - Do not give camera angles 
 - Follow the following schema and return JSON data (Max 4-5 Images)
 
@@ -111,6 +112,11 @@ export const GenerateVideoData = inngest.createFunction(
         throw error;
       }
     });
+
+    /* const GenerateAudioFile = {
+      fileName: "PJ-1753112766673.mp3",
+      filePath: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j975p2372h9g22vsefb5a768457m7jsy/audio/PJ2-1753182964386.mp3",
+    } */
 
     // Generate Captions
     const GenerateCaptions = await step.run("GenerateCaptions", async () => {
@@ -217,15 +223,29 @@ export const GenerateVideoData = inngest.createFunction(
             prompt: { imagePrompt: string; sceneContent: string },
             index: number
           ) => {
-            const result = await a44Client.images.generate({
+            /* const result = await a44Client.images.generate({
               model: "provider-2/FLUX.1-schnell-v2",
               prompt: prompt.imagePrompt + " size: 1024x1536",
               size: "1024x1536",
               response_format: "b64_json",
               output_compression: 50,
+            }); */
+
+            const result = await gemini.models.generateImages({
+                    model: 'models/imagen-4.0-generate-preview-06-06',
+                    prompt: prompt.imagePrompt,
+                    config: {
+                        numberOfImages: 1,
+                        outputMimeType: 'image/jpeg',
+                        aspectRatio: '9:16',
+                    },
             });
 
-            const base64 = result.data?.[0].b64_json;
+            if (!result?.generatedImages) {
+                throw new Error('Failed to generate images');
+            }
+
+            const base64 = result.generatedImages?.[0]?.image?.imageBytes;
             //@ts-ignore
             
             return { base64, ...prompt };
