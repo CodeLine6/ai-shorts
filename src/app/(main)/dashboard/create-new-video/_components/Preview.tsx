@@ -15,7 +15,7 @@ function Preview({formData}:any) {
             alt={selectedVideoStyle?.name} 
             width={500} height={500} 
         />}
-        <h2 className={`${selectedCaptionStyle?.style} absolute bottom-1 text-center w-full`} >
+        <h2 className={`${selectedCaptionStyle?.style} absolute bottom-1 text-center w-full text-3xl`} >
             {formData?.captionStyle?.name}
         </h2>
     </div>

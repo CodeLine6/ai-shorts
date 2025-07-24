@@ -57,7 +57,7 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
             bottom: '-310px',
             textAlign: 'center',
         }}>
-            <h2 className={captionClass}>{getCurrentCaption()}</h2>
+            <h2 className={`${captionClass} text-6xl`}>{getCurrentCaption()}</h2>
         </AbsoluteFill>
             {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
     </div>
