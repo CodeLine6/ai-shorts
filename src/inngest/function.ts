@@ -286,8 +286,8 @@ export const GenerateVideoData = inngest.createFunction(
               }
             );
 
-          const start = parseFloat((relatedTranscript[0]?.start - 0.3).toFixed(3));
-          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 0.3).toFixed(3));
+          const start = index === 0 ? 0 : parseFloat((relatedTranscript[0]?.start).toFixed(3));
+          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 0.8).toFixed(3));
 
           const duration = parseFloat((end - start).toFixed(3));
           console.log(`Duration `, duration, " Start: ", start, " End: ", end);
