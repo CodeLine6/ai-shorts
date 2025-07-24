@@ -12,18 +12,20 @@ const ImagePrompt = `Generate Image prompt of style {style} with all details for
 - Give accurate image prompts strictly depending on the story line
 - Do not skip any part of the script
 - Include image style in the image prompt
-- imagePrompt should strictly stick to what is described in sceneContent
+- imagePrompt should stick to what is described in sceneContent
 - Do not give camera angles 
 - Follow the following schema and return JSON data (Max 4-5 Images)
+- Do not add any character or dotes (...) after a sentence or word that was not present in the original script 
+
 
 [
   {
-    'imagePrompt': '',
+    'imagePrompt': '<Image Prompt>',
     'sceneContent': '<Script Content>'
   },
 ]
 
-By combining sceneContent of each image prompt we should be able to get the entire script
+By combining sceneContent of each image prompt we should be able to get the exact text of the script.
 `;
 
 export const helloWorld = inngest.createFunction(
@@ -59,7 +61,7 @@ export const GenerateVideoData = inngest.createFunction(
               Accept: "audio/mpeg",
             },
             body: JSON.stringify({
-              text: script.tts_text,
+              text: script.content,
               model_id: "eleven_multilingual_v2",
               voice_settings: {
                 stability: 0.5,
@@ -414,8 +416,7 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
           audioUrl: video.audioUrl, // Use the public URL from Supabase
           captionJson: video.captionJson,
           images: video.images,
-          status: "failed", // Removed as it's not in schema
-          // errorMessage: error, // Removed as it's not in schema
+          status: "failed",
         });
       });
       return { message: "Render failed, database updated" };
@@ -436,7 +437,7 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
           audioUrl: video.audioUrl, // Use the public URL from Supabase
           captionJson: video.captionJson,
           images: video.images,
-          status: "completed", // Removed as it's not in schema
+          status: "completed",
         });
       });
       return { message: "Render completed, database updated" };

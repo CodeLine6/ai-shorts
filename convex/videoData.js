@@ -46,8 +46,8 @@ export const UpdateVideoRecord = mutation({
         audioUrl : v.optional(v.string()),
         images: v.optional(v.array(v.object({
             image: v.string(),
-            start: v.number(),
-            duration: v.number()
+            start: v.any(),
+            duration: v.any()
         }))),
         status: v.optional(v.string()),
         captionJson: v.optional(v.any()),
