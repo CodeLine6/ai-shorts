@@ -8,7 +8,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ConvexClientProvider>
       <AuthProvider>
-        <PaypalProvider>
+        <PaypalProvider clientId={process.env.PAYPAL_CLIENT_ID!}>
             <ThemeProvider>
               {children}
             </ThemeProvider>

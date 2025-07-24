@@ -5,7 +5,10 @@ export const CreateVideoData = mutation({
     args : {
             title: v.string(),
             topic: v.string(),
-            script: v.string(),
+            script: v.object({
+                content: v.string(),
+                tts_text: v.string()
+            }),
             videoStyle: v.string(),
             caption: v.any(),
             voice: v.object({
@@ -20,7 +23,7 @@ export const CreateVideoData = mutation({
         const result = await db.insert('videoData',{
             title: args.title,
             topic:args.topic,
-            script:args.script,
+            script:args.script.content,
             videoStyle:args.videoStyle,
             caption:args.caption,
             voice:args.voice,

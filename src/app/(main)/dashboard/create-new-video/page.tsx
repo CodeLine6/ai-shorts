@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2Icon, WandSparkles } from "lucide-react";
 import Preview from "./_components/Preview";
 import axios from "axios";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ function page() {
     const [formData, setFormData] = useState<any>({});
     const [loading, setLoading] = useState(false);
     const CreateInitialVideoRecord = useMutation(api.videoData.CreateVideoData);
-    const { data: session, status, update } = useSession();
+    const { data: session, update } = useSession();
     const user = session?.user;
 
     const onHandleInputChange = (fieldName : string, fieldValue : string | {}) => {
@@ -32,7 +32,7 @@ function page() {
 
     const GenerateVideo = async () => {
 
-        if(user.credits <= 0) { // user is guaranteed to be defined here
+        if(user && user.credits <= 0) { // user is guaranteed to be defined here
             toast({
                 title: "Error",
                 description: "You don't have enough credits to create a video",
@@ -57,8 +57,8 @@ function page() {
             voice: formData.voice,
             //@ts-ignore
             uid: user._id,
-            createdBy: user.email,
-            credits: user.credits // This is the credits *before* decrement
+            createdBy: user?.email || "Unknown",
+            credits: user?.credits || 0 // This is the credits *before* decrement
         });
 
         // Fetch the updated user data from Convex to get the new credit balance

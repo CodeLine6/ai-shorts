@@ -1,5 +1,4 @@
 "use client"
-import { Button } from '@/components/ui/button';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { useMutation } from 'convex/react';
 import { CircleDollarSign } from 'lucide-react';
@@ -36,10 +35,10 @@ const page = () => {
   const user = session?.user
 
   const onPaymentSuccess = async (cost: number,credits: number) => {
-    const updateUserCredits = useMutation(api.user.updateUserCredits);
+    const updateUserCredits = useMutation(api.user.UpdateUserCredits);
     const result = await updateUserCredits({
-        credits: user?.credits + credits,
-        uid: user?._id
+        newCredits: user?.credits + credits,
+        userId: user?._id
     })
 
     update({

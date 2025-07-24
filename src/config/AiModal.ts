@@ -8,11 +8,11 @@ import {
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import OpenAI from 'openai';
 
-const a4fApiKey = process.env.NEXT_PUBLIC_A4F_API_KEY;
+const a4fApiKey = process.env.A4F_API_KEY;
 const a4fBaseUrl = 'https://api.a4f.co/v1';
 
   export const gemini = new GoogleGenAI({
-    apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY,
   });
   export const config = {
     responseMimeType: 'application/json',

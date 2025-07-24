@@ -24,22 +24,22 @@ const suggestions = [
     'Science Experiments',
     'Motivational Stories'
 ]
-function Topic({onHandleInputChange,formData} : {onHandleInputChange : (fieldName : string, fieldValue : string) => void, formData : any}) {
+function Topic({onHandleInputChange,formData} : {onHandleInputChange : (fieldName : string, fieldValue : {content: string, tts_text: string} | string) => void, formData : any}) {
   const [selectedTopic, setSelectedTopic] = useState(formData.topic || '');
   const [selectedScriptIndex, setSelectedScriptIndex] = useState<Number | null>(formData.script ? 0 : null);
   const { data: session } = useSession();
   const user = session?.user;
   
-  const [scripts, setScripts] = useState<[{ content: string }] | undefined>(()  => {
+  const [scripts, setScripts] = useState<[{ content: string , tts_text: string}] | undefined>(()  => {
     if (formData.script) {
-      return [{ content: formData.script }];
+      return [{ content: formData.script.content, tts_text: formData.script.tts_text }];
     }
     return ;
   });
   const [loading, setLoading] = useState(false);
 
   const GenerateScript = async () => {
-     if(user.credits <= 0) { // user is guaranteed to be defined here
+     if(user && user.credits <= 0) { // user is guaranteed to be defined here
             toast({
                 title: "Error",
                 description: "You don't have enough credits to create a video",
@@ -101,16 +101,17 @@ function Topic({onHandleInputChange,formData} : {onHandleInputChange : (fieldNam
         <div className="mt-3">
             <h2>Select the script</h2>
             <div className="grid grid-cols-2 gap-5 mt-1">
-            {scripts.map((script, index) => (
-                <div key={index} className={`p-3 border rounded-lg cursor-pointer ${selectedScriptIndex === index && 'bg-secondary border-white'}`} onClick={() => {
+            {scripts.map((script, index) => {
+               console.log(script.tts_text)
+               return <div key={index} className={`p-3 border rounded-lg cursor-pointer ${selectedScriptIndex === index && 'bg-secondary border-white'}`} onClick={() => {
                   setSelectedScriptIndex(index)
-                  onHandleInputChange('script', script.content)
+                  onHandleInputChange('script', script)
                 }} title={`${script.content}`}>
                     <h2 className="line-clamp-4 text-sm text-gray-300">
                         {script.content}
                     </h2>
                 </div>
-            ))}    
+            })}    
         </div>
         
         </div>}

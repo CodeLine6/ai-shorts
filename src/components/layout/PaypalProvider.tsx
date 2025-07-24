@@ -2,9 +2,9 @@
 
 import { PayPalScriptProvider } from "@paypal/react-paypal-js"
 
-const PaypalProvider = ({children}: {children: React.ReactNode}) => {
+const PaypalProvider = ({children, clientId}: {children: React.ReactNode, clientId: string}) => {
   return (
-            <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}>
+            <PayPalScriptProvider options={{ clientId }}>
                 {children}
             </PayPalScriptProvider>
   )

@@ -7,7 +7,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { sentence } from "../../convex/schema";
 import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
@@ -60,7 +59,7 @@ export const GenerateVideoData = inngest.createFunction(
               Accept: "audio/mpeg",
             },
             body: JSON.stringify({
-              text: script,
+              text: script.tts_text,
               model_id: "eleven_multilingual_v2",
               voice_settings: {
                 stability: 0.5,
@@ -124,35 +123,13 @@ export const GenerateVideoData = inngest.createFunction(
       const gladiaV2BaseUrl = "https://api.gladia.io/v2/";
       const headers: Record<string, string> = {
         //@ts-ignore
-        "x-gladia-key": process.env.NEXT_PUBLIC_GLADIA_API_KEY,
+        "x-gladia-key": process.env.GLADIA_API_KEY,
       };
       try {
         // Fetch the audio file from the public URL
-        const audioResponse = await axios.get(GenerateAudioFile.filePath, {
-          responseType: "arraybuffer",
-        });
-        const audioBuffer = Buffer.from(audioResponse.data);
-
-        // Create FormData
-        const formData = new FormData();
-        const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
-        formData.append("audio", audioBlob, GenerateAudioFile.fileName);
-
-        // Make the API request
-        const uploadResponse = await axios.post(
-          `${gladiaV2BaseUrl}upload`,
-          formData,
-          {
-            headers,
-          }
-        );
-
-        if (uploadResponse.status !== 200) {
-          throw new Error(`HTTP error! status: ${uploadResponse.status}`);
-        }
 
         const requestData = {
-          audio_url: uploadResponse.data.audio_url,
+          audio_url: GenerateAudioFile.filePath,
           sentences: true,
         };
 
