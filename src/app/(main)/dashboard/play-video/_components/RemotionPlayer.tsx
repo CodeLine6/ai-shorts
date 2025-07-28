@@ -1,15 +1,15 @@
 "use client"
 import RemotionComposition from "@/app/_components/RemotionComposition";
 import { Player } from "@remotion/player";
-import { useState } from "react";
-import { sentence } from "../../../../../../convex/schema";
+import { sentence, utterance } from "../../../../../../convex/schema";
 
 const RemotionPlayer = ({ videoData }: { videoData: any }) => {
-const captions: sentence[] = videoData?.captionJson
+const captions: {sentences: sentence[], utterances: utterance[]} = videoData?.captionJson
+const utterances = captions.utterances
   return (
     <Player
       component={RemotionComposition}
-      durationInFrames={parseInt(captions[captions.length - 1].end.toFixed(0)) * 30}
+      durationInFrames={parseInt(utterances[utterances.length - 1].end.toFixed(0)) * 30}
       fps={30}
       compositionWidth={720}
       compositionHeight={1280}
