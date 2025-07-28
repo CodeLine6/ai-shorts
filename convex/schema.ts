@@ -68,7 +68,7 @@ interface subtitle {
   subtitles: string;
 }
 
-interface utterance {
+export interface utterance {
   channel: number;
   confidence: number;
   end: number;

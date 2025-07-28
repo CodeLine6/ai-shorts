@@ -1,3 +1,4 @@
+import { a44Client } from '@/config/AiModal';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 // Handle POST requests
@@ -8,7 +9,7 @@ export async function GET(req, res) {
 
   try {
 
-      const audio = await client.textToSpeech.convert("21m00Tcm4TlvDq8ikWAM", {
+      /* const audio = await client.textToSpeech.convert("21m00Tcm4TlvDq8ikWAM", {
 
       text: "hello how are you?",
 
@@ -27,7 +28,28 @@ export async function GET(req, res) {
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length.toString(),
       },
-    });
+    }); */
+    
+    // get prompt from search parameter
+    const prompt = req.nextUrl.searchParams.get('prompt');
+
+    const fluxReq = await a44Client.images.generate({
+                      model: "provider-6/FLUX.1-kontext-max",
+                      prompt: prompt,
+                      response_format: "b64_json",
+                      output_compression: 50,
+                      size: "1024x1536",
+                });
+    
+                const  base64 = fluxReq.data?.[0]?.b64_json;
+
+                const imageBuffer = Buffer.from(base64, 'base64');
+                return new Response(imageBuffer, {
+                  headers: {
+                    'Content-Type': 'image/png',
+                    'Content-Length': imageBuffer.length.toString(),
+                  },
+                });
 
   } catch (error) {
     console.error('ElevenLabs API Error:', error);

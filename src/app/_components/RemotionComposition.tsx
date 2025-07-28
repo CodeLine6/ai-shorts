@@ -1,11 +1,11 @@
 "use client"
 import React, { useEffect } from 'react'
-import { AbsoluteFill, Audio, interpolate, Sequence, useCurrentFrame, useVideoConfig } from 'remotion'
-import { sentence, word } from '../../../convex/schema'
+import { AbsoluteFill, Audio, interpolate, Sequence, useCurrentFrame, useVideoConfig, spring } from 'remotion'
+import { sentence, utterance, word } from '../../../convex/schema'
 
 const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
-    const captions: sentence[] = videoData?.captionJson
-    
+    const captions: { sentences: sentence[], utterances: utterance[]} = videoData?.captionJson
+    const sentences = captions.sentences;
     const {fps} = useVideoConfig()
     const imageList = videoData?.images
     const frame = useCurrentFrame();
@@ -15,22 +15,20 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
         videoData && getDurationFrame()
     }, [videoData])
     const getDurationFrame = () => {
-      const totalDuration = (captions[captions.length - 1].end) * fps
+      const totalDuration = (sentences[sentences.length - 1].end) * fps
       //setDurationInFrames(Number(totalDuration.toFixed(0)) + 100)
       return totalDuration
     }
 
     const getCurrentCaption = () => {
        const singleCaption: word[] = [] 
-       captions?.forEach((caption : sentence) => {
-        caption?.words?.forEach((word : word) => {
-            singleCaption.push(word)
-        })
+       sentences?.forEach((caption : sentence) => {
+         singleCaption.push(...caption.words)
        })
        const currentTime = frame/fps;
 
        const currentWord = singleCaption.find((word : word) => word.start <= currentTime && word.end >= currentTime)
-       return currentWord ? currentWord.word : ''
+       return currentWord
 
     }
 
@@ -41,9 +39,19 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
                 const startTime = image.start * fps
                 const duration = image.duration * fps
                 
+                const opacity = spring({
+                  frame: frame - startTime,
+                  fps,
+                  config: {
+                    damping: 200,
+                    stiffness: 100,
+                    mass: 0.5,
+                  },
+                });
+
                 return (
                     <Sequence key={index} from={startTime} durationInFrames={duration} >
-                      <AbsoluteFill>
+                      <AbsoluteFill style={{ opacity }}>
                         <img src={image.image} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                         </AbsoluteFill>
                     </Sequence>
@@ -51,13 +59,49 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
             })}
         </AbsoluteFill>
         <AbsoluteFill style={{
-            opacity: interpolate(frame, [0, 1], [0, 1]),
             justifyContent: 'center',
             top: undefined,
             bottom: '-310px',
             textAlign: 'center',
         }}>
-            <h2 className={`${captionClass} text-6xl`}>{getCurrentCaption()}</h2>
+            <h2 className={`${captionClass} text-6xl`}>
+              {((wordObj = getCurrentCaption()) => {
+                if (!wordObj) {
+                  return null;
+                }
+                const wordStartFrame = Math.floor(wordObj.start * fps);
+                const wordEndFrame = Math.floor(wordObj.end * fps);
+
+                const opacity = interpolate(frame, [wordStartFrame, wordStartFrame + 10], [0.5, 1], {
+                  extrapolateLeft: 'clamp',
+                  extrapolateRight: 'clamp',
+                });
+
+                const scale = spring({
+                  frame: frame - wordStartFrame,
+                  fps,
+                  config: {
+                    damping: 200,
+                    stiffness: 100,
+                    mass: 0.5,
+                  },
+                  durationInFrames: 10,
+                  from: 0.8
+                });
+
+                return (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      transform: `scale(${scale})`,
+                      marginRight: '0.5em', // Add some space between words
+                    }}
+                  >
+                    {wordObj.word}
+                  </span>
+                );
+              })()}
+            </h2>
         </AbsoluteFill>
             {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
     </div>

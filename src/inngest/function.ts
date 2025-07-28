@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"; // Import Supabase client
 import { gemini, config, model, a44Client } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
-import { sentence } from "../../convex/schema";
+import { sentence,utterance } from "../../convex/schema";
 import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
@@ -13,10 +13,8 @@ const ImagePrompt = `Generate Image prompt of style {style} with all details for
 - Do not skip any part of the script
 - Include image style in the image prompt
 - imagePrompt should stick to what is described in sceneContent
-- Do not give camera angles 
 - Follow the following schema and return JSON data (Max 4-5 Images)
-- Do not add any character or dotes (...) after a sentence or word that was not present in the original script 
-
+- Do not add any character or dotes (...) after a sentence or word in sceneContent that was not present in the original script
 
 [
   {
@@ -25,8 +23,16 @@ const ImagePrompt = `Generate Image prompt of style {style} with all details for
   },
 ]
 
-By combining sceneContent of each image prompt we should be able to get the exact text of the script.
-`;
+- If the script contains reference to real people then make sure to shorten their name in imagePrompt so that there is privacy error while generating images with image generation model while keeping original name intact in the sceneContent
+  For example :
+  Elizabeth Short => Liz Short Or Ms E. Short
+  John Doe => J Doe Or John D.
+
+- By combining sceneContent of each image prompt we should be able to get the exact text of the script.
+
+-Once you have the prompts ready in the JSON format. You can identify characters that are referenced across all the imagePrompt(s) 
+ give those characters a consistent character descriptions so that consistent face and bodily features are generated for a given character across all the  images 
+ and finally add it to the appropriate image prompt.`;
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
@@ -126,6 +132,7 @@ export const GenerateVideoData = inngest.createFunction(
       const headers: Record<string, string> = {
         //@ts-ignore
         "x-gladia-key": process.env.GLADIA_API_KEY,
+        "Content-Type": "application/json",
       };
       try {
         // Fetch the audio file from the public URL
@@ -167,15 +174,13 @@ export const GenerateVideoData = inngest.createFunction(
       }
     });
 
-    // Generate Image Prompt from Script
 
+    // Generate Image Prompt from Script (modified to use characterDescription)
     const GenerateImagePrompt = await step.run(
       "GenerateImagePrompt",
       async () => {
-        const FINAL_PROMPT = ImagePrompt.replace("{style}", videoStyle).replace(
-          "{script}",
-          GenerateCaptions.result.transcription.full_transcript
-        );
+        const FINAL_PROMPT = ImagePrompt.replace("{style}", videoStyle)
+          .replace("{script}", GenerateCaptions.result.transcription.full_transcript)
 
         const result = await gemini.models.generateContentStream({
           model,
@@ -203,29 +208,30 @@ export const GenerateVideoData = inngest.createFunction(
             prompt: { imagePrompt: string; sceneContent: string },
             index: number
           ) => {
-            /* const result = await a44Client.images.generate({
-              model: "provider-2/FLUX.1-schnell-v2",
-              prompt: prompt.imagePrompt + " size: 1024x1536",
-              size: "1024x1536",
-              response_format: "b64_json",
-              output_compression: 50,
-            }); */
-
-            const result = await gemini.models.generateImages({
+            let base64
+            const imagenRequest = await gemini.models.generateImages({
                     model: 'models/imagen-4.0-generate-preview-06-06',
                     prompt: prompt.imagePrompt,
                     config: {
                         numberOfImages: 1,
                         outputMimeType: 'image/jpeg',
-                        aspectRatio: '9:16',
-                    },
+                        aspectRatio: '9:16',                    },
             });
 
-            if (!result?.generatedImages) {
-                throw new Error('Failed to generate images');
+            base64 = imagenRequest.generatedImages?.[0]?.image?.imageBytes;
+            if (base64 === undefined) {
+              const fluxReq = await a44Client.images.generate({
+                  model: "provider-6/FLUX.1-kontext-max",
+                  prompt: prompt.imagePrompt,
+                  response_format: "b64_json",
+                  output_compression: 50,
+                  size: "1024x1536",
+            });
+
+              base64 = fluxReq.data?.[0]?.b64_json;
             }
 
-            const base64 = result.generatedImages?.[0]?.image?.imageBytes;
+          
             //@ts-ignore
             
             return { base64, ...prompt };
@@ -278,16 +284,16 @@ export const GenerateVideoData = inngest.createFunction(
       const images = await Promise.all(
         UploadToStorage.map(async ({ imageUrl, sceneContent }, index) => {
           const relatedTranscript =
-            GenerateCaptions.result.transcription.sentences.filter(
-              ({ sentence }: sentence) => {
+            GenerateCaptions.result.transcription.utterances.filter(
+              ({ text }: utterance) => {
                 return sceneContent
                   .toLowerCase()
-                  .includes(sentence.toLowerCase());
+                  .includes(text.toLowerCase());
               }
             );
 
           const start = index === 0 ? 0 : parseFloat((relatedTranscript[0]?.start).toFixed(3));
-          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 0.8).toFixed(3));
+          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 1).toFixed(3));
 
           const duration = parseFloat((end - start).toFixed(3));
           console.log(`Duration `, duration, " Start: ", start, " End: ", end);
@@ -308,7 +314,10 @@ export const GenerateVideoData = inngest.createFunction(
       await convex.mutation(api.videoData.UpdateVideoRecord, {
         recordId,
         audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
-        captionJson: GenerateCaptions.result.transcription.sentences,
+        captionJson: {
+          sentences: GenerateCaptions.result.transcription.sentences,
+          utterances: GenerateCaptions.result.transcription.utterances,
+        },
         images: ImageObject,
       });
     });

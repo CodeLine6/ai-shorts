@@ -4,503 +4,882 @@ import RemotionComposition from './../src/app/_components/RemotionComposition';
 import './styles.css';
 
 const videoData = {
-  audioUrl: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977fy6vb5k6frs6vgqyhygq397m62ar/audio/PJ2-1753193690351.mp3",
-  captionJson: [
-  {
-    channel: 0,
-    confidence: 0.97,
-    end: 3.824,
-    language: "en",
-    sentence:
-      "Lily loved drawing, but she always used the same colors.",
-    start: 0.1,
-    words: [
-      {
-        confidence: 0.98,
-        end: 0.34,
-        start: 0.1,
-        word: "Lily",
-      },
-      {
-        confidence: 1,
-        end: 0.761,
-        start: 0.48,
-        word: " loved",
-      },
-      {
-        confidence: 0.86,
-        end: 1.301,
-        start: 0.841,
-        word: " drawing,",
-      },
-      {
-        confidence: 1,
-        end: 1.642,
-        start: 1.521,
-        word: " but",
-      },
-      {
-        confidence: 0.98,
-        end: 1.781,
-        start: 1.662,
-        word: " she",
-      },
-      {
-        confidence: 1,
-        end: 2.363,
-        start: 1.962,
-        word: " always",
-      },
-      {
-        confidence: 1,
-        end: 2.762,
-        start: 2.502,
-        word: " used",
-      },
-      {
-        confidence: 0.95,
-        end: 2.883,
-        start: 2.763,
-        word: " the",
-      },
-      {
-        confidence: 0.94,
-        end: 3.283,
-        start: 2.982,
-        word: " same",
-      },
-      {
-        confidence: 1,
-        end: 3.824,
-        start: 3.363,
-        word: " colors.",
-      },
+  audioUrl: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977bd0m5zz3s4vdzs91v5gych7mf89b/audio/PJ-1753720252196.mp3",
+  captionJson: {
+    sentences: [
+        {
+          "words": [
+            {
+              "word": "In",
+              "start": 0.02,
+              "end": 0.14,
+              "confidence": 0.5
+            },
+            {
+              "word": " 1947,",
+              "start": 0.141,
+              "end": 1.441,
+              "confidence": 0.06
+            },
+            {
+              "word": " the",
+              "start": 1.722,
+              "end": 1.842,
+              "confidence": 1
+            },
+            {
+              "word": " Black",
+              "start": 1.861,
+              "end": 2.121,
+              "confidence": 0.65
+            },
+            {
+              "word": " Dahlia",
+              "start": 2.182,
+              "end": 2.562,
+              "confidence": 0.74
+            },
+            {
+              "word": " case",
+              "start": 2.643,
+              "end": 2.963,
+              "confidence": 1
+            },
+            {
+              "word": " gripped",
+              "start": 3.062,
+              "end": 3.324,
+              "confidence": 0.93
+            },
+            {
+              "word": " Los",
+              "start": 3.424,
+              "end": 3.645,
+              "confidence": 0.99
+            },
+            {
+              "word": " Angeles.",
+              "start": 3.744,
+              "end": 4.203,
+              "confidence": 0.9
+            }
+          ],
+          "language": "en",
+          "start": 0.02,
+          "end": 4.203,
+          "channel": 0,
+          "sentence": "In 1947, the Black Dahlia case gripped Los Angeles.",
+          "confidence": 0.75
+        },
+        {
+          "words": [
+            {
+              "word": " Elizabeth",
+              "start": 4.727,
+              "end": 5.227,
+              "confidence": 1
+            },
+            {
+              "word": " Short,",
+              "start": 5.324,
+              "end": 5.664,
+              "confidence": 0.99
+            },
+            {
+              "word": " a",
+              "start": 5.805,
+              "end": 5.926,
+              "confidence": 1
+            },
+            {
+              "word": " young",
+              "start": 5.984,
+              "end": 6.188,
+              "confidence": 0.96
+            },
+            {
+              "word": " aspiring",
+              "start": 6.246,
+              "end": 6.805,
+              "confidence": 0.87
+            },
+            {
+              "word": " actress,",
+              "start": 6.969,
+              "end": 7.406,
+              "confidence": 0.91
+            },
+            {
+              "word": " was",
+              "start": 7.688,
+              "end": 7.828,
+              "confidence": 1
+            },
+            {
+              "word": " found",
+              "start": 7.906,
+              "end": 8.266,
+              "confidence": 1
+            },
+            {
+              "word": " murdered,",
+              "start": 8.391,
+              "end": 8.828,
+              "confidence": 0.93
+            },
+            {
+              "word": " her",
+              "start": 9.188,
+              "end": 9.312,
+              "confidence": 0.98
+            },
+            {
+              "word": " body",
+              "start": 9.391,
+              "end": 9.672,
+              "confidence": 1
+            },
+            {
+              "word": " posed",
+              "start": 9.789,
+              "end": 10.211,
+              "confidence": 0.95
+            },
+            {
+              "word": " in",
+              "start": 10.227,
+              "end": 10.352,
+              "confidence": 0.86
+            },
+            {
+              "word": " a",
+              "start": 10.353,
+              "end": 10.43,
+              "confidence": 1
+            },
+            {
+              "word": " gruesome",
+              "start": 10.469,
+              "end": 10.914,
+              "confidence": 0.63
+            },
+            {
+              "word": " manner.",
+              "start": 10.953,
+              "end": 11.273,
+              "confidence": 0.94
+            }
+          ],
+          "language": "en",
+          "start": 4.727,
+          "end": 11.273,
+          "channel": 0,
+          "sentence": "Elizabeth Short, a young aspiring actress, was found murdered, her body posed in a gruesome manner.",
+          "confidence": 0.94
+        },
+        {
+          "words": [
+            {
+              "word": " The",
+              "start": 11.812,
+              "end": 11.93,
+              "confidence": 1
+            },
+            {
+              "word": " killer",
+              "start": 11.969,
+              "end": 12.289,
+              "confidence": 0.96
+            },
+            {
+              "word": " was",
+              "start": 12.352,
+              "end": 12.492,
+              "confidence": 1
+            },
+            {
+              "word": " never",
+              "start": 12.57,
+              "end": 12.789,
+              "confidence": 0.97
+            },
+            {
+              "word": " found,",
+              "start": 12.914,
+              "end": 13.352,
+              "confidence": 1
+            },
+            {
+              "word": " leaving",
+              "start": 13.734,
+              "end": 14.031,
+              "confidence": 1
+            },
+            {
+              "word": " behind",
+              "start": 14.07,
+              "end": 14.531,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 14.594,
+              "end": 14.711,
+              "confidence": 1
+            },
+            {
+              "word": " chilling",
+              "start": 14.797,
+              "end": 15.172,
+              "confidence": 0.98
+            },
+            {
+              "word": " mystery",
+              "start": 15.258,
+              "end": 15.719,
+              "confidence": 1
+            },
+            {
+              "word": " that",
+              "start": 16.031,
+              "end": 16.156,
+              "confidence": 1
+            },
+            {
+              "word": " continues",
+              "start": 16.203,
+              "end": 16.75,
+              "confidence": 0.98
+            },
+            {
+              "word": " to",
+              "start": 16.781,
+              "end": 16.891,
+              "confidence": 1
+            },
+            {
+              "word": " fascinate",
+              "start": 17,
+              "end": 17.656,
+              "confidence": 0.87
+            },
+            {
+              "word": " and",
+              "start": 17.672,
+              "end": 17.797,
+              "confidence": 1
+            },
+            {
+              "word": " horrify.",
+              "start": 17.859,
+              "end": 18.5,
+              "confidence": 0.86
+            }
+          ],
+          "language": "en",
+          "start": 11.812,
+          "end": 18.5,
+          "channel": 0,
+          "sentence": "The killer was never found, leaving behind a chilling mystery that continues to fascinate and horrify.",
+          "confidence": 0.98
+        },
+        {
+          "words": [
+            {
+              "word": " Was",
+              "start": 19.156,
+              "end": 19.297,
+              "confidence": 1
+            },
+            {
+              "word": " it",
+              "start": 19.312,
+              "end": 19.438,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 19.439,
+              "end": 19.516,
+              "confidence": 1
+            },
+            {
+              "word": " crime",
+              "start": 19.562,
+              "end": 19.953,
+              "confidence": 0.91
+            },
+            {
+              "word": " of",
+              "start": 19.954,
+              "end": 20.078,
+              "confidence": 1
+            },
+            {
+              "word": " passion",
+              "start": 20.141,
+              "end": 20.688,
+              "confidence": 0.97
+            },
+            {
+              "word": " or",
+              "start": 21.125,
+              "end": 21.234,
+              "confidence": 1
+            },
+            {
+              "word": " the",
+              "start": 21.235,
+              "end": 21.359,
+              "confidence": 1
+            },
+            {
+              "word": " work",
+              "start": 21.406,
+              "end": 21.641,
+              "confidence": 1
+            },
+            {
+              "word": " of",
+              "start": 21.656,
+              "end": 21.781,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 21.782,
+              "end": 21.859,
+              "confidence": 0.99
+            },
+            {
+              "word": " disturbed",
+              "start": 21.875,
+              "end": 22.469,
+              "confidence": 0.85
+            },
+            {
+              "word": " mind?",
+              "start": 22.562,
+              "end": 23,
+              "confidence": 1
+            }
+          ],
+          "language": "en",
+          "start": 19.156,
+          "end": 23,
+          "channel": 0,
+          "sentence": "Was it a crime of passion or the work of a disturbed mind?",
+          "confidence": 0.98
+        },
+        {
+          "words": [
+            {
+              "word": " The",
+              "start": 23.547,
+              "end": 23.656,
+              "confidence": 0.99
+            },
+            {
+              "word": " files",
+              "start": 23.75,
+              "end": 24.156,
+              "confidence": 0.98
+            },
+            {
+              "word": " remain",
+              "start": 24.25,
+              "end": 24.609,
+              "confidence": 0.99
+            },
+            {
+              "word": " open.",
+              "start": 24.781,
+              "end": 25.109,
+              "confidence": 1
+            }
+          ],
+          "language": "en",
+          "start": 23.547,
+          "end": 25.109,
+          "channel": 0,
+          "sentence": "The files remain open.",
+          "confidence": 0.99
+        }
     ],
+    utterances: [
+        {
+          "words": [
+            {
+              "word": "In",
+              "start": 0.02,
+              "end": 0.14,
+              "confidence": 0.5
+            },
+            {
+              "word": " 1947,",
+              "start": 0.141,
+              "end": 1.441,
+              "confidence": 0.06
+            }
+          ],
+          "text": "In 1947,",
+          "language": "en",
+          "start": 0.02,
+          "end": 1.441,
+          "channel": 0,
+          "confidence": 0.28
+        },
+        {
+          "words": [
+            {
+              "word": " the",
+              "start": 1.722,
+              "end": 1.842,
+              "confidence": 1
+            },
+            {
+              "word": " Black",
+              "start": 1.861,
+              "end": 2.121,
+              "confidence": 0.65
+            },
+            {
+              "word": " Dahlia",
+              "start": 2.182,
+              "end": 2.562,
+              "confidence": 0.74
+            },
+            {
+              "word": " case",
+              "start": 2.643,
+              "end": 2.963,
+              "confidence": 1
+            },
+            {
+              "word": " gripped",
+              "start": 3.062,
+              "end": 3.324,
+              "confidence": 0.93
+            },
+            {
+              "word": " Los",
+              "start": 3.424,
+              "end": 3.645,
+              "confidence": 0.99
+            },
+            {
+              "word": " Angeles.",
+              "start": 3.744,
+              "end": 4.203,
+              "confidence": 0.9
+            }
+          ],
+          "text": "the Black Dahlia case gripped Los Angeles.",
+          "language": "en",
+          "start": 1.722,
+          "end": 4.203,
+          "channel": 0,
+          "confidence": 0.89
+        },
+        {
+          "words": [
+            {
+              "word": " Elizabeth",
+              "start": 4.727,
+              "end": 5.227,
+              "confidence": 1
+            },
+            {
+              "word": " Short,",
+              "start": 5.324,
+              "end": 5.664,
+              "confidence": 0.99
+            }
+          ],
+          "text": "Elizabeth Short,",
+          "language": "en",
+          "start": 4.727,
+          "end": 5.664,
+          "channel": 0,
+          "confidence": 0.99
+        },
+        {
+          "words": [
+            {
+              "word": " a",
+              "start": 5.805,
+              "end": 5.926,
+              "confidence": 1
+            },
+            {
+              "word": " young",
+              "start": 5.984,
+              "end": 6.188,
+              "confidence": 0.96
+            },
+            {
+              "word": " aspiring",
+              "start": 6.246,
+              "end": 6.805,
+              "confidence": 0.87
+            },
+            {
+              "word": " actress,",
+              "start": 6.969,
+              "end": 7.406,
+              "confidence": 0.91
+            }
+          ],
+          "text": "a young aspiring actress,",
+          "language": "en",
+          "start": 5.805,
+          "end": 7.406,
+          "channel": 0,
+          "confidence": 0.94
+        },
+        {
+          "words": [
+            {
+              "word": " was",
+              "start": 7.688,
+              "end": 7.828,
+              "confidence": 1
+            },
+            {
+              "word": " found",
+              "start": 7.906,
+              "end": 8.266,
+              "confidence": 1
+            },
+            {
+              "word": " murdered,",
+              "start": 8.391,
+              "end": 8.828,
+              "confidence": 0.93
+            }
+          ],
+          "text": "was found murdered,",
+          "language": "en",
+          "start": 7.688,
+          "end": 8.828,
+          "channel": 0,
+          "confidence": 0.98
+        },
+        {
+          "words": [
+            {
+              "word": " her",
+              "start": 9.188,
+              "end": 9.312,
+              "confidence": 0.98
+            },
+            {
+              "word": " body",
+              "start": 9.391,
+              "end": 9.672,
+              "confidence": 1
+            },
+            {
+              "word": " posed",
+              "start": 9.789,
+              "end": 10.211,
+              "confidence": 0.95
+            },
+            {
+              "word": " in",
+              "start": 10.227,
+              "end": 10.352,
+              "confidence": 0.86
+            },
+            {
+              "word": " a",
+              "start": 10.353,
+              "end": 10.43,
+              "confidence": 1
+            },
+            {
+              "word": " gruesome",
+              "start": 10.469,
+              "end": 10.914,
+              "confidence": 0.63
+            },
+            {
+              "word": " manner.",
+              "start": 10.953,
+              "end": 11.273,
+              "confidence": 0.94
+            }
+          ],
+          "text": "her body posed in a gruesome manner.",
+          "language": "en",
+          "start": 9.188,
+          "end": 11.273,
+          "channel": 0,
+          "confidence": 0.91
+        },
+        {
+          "words": [
+            {
+              "word": " The",
+              "start": 11.812,
+              "end": 11.93,
+              "confidence": 1
+            },
+            {
+              "word": " killer",
+              "start": 11.969,
+              "end": 12.289,
+              "confidence": 0.96
+            },
+            {
+              "word": " was",
+              "start": 12.352,
+              "end": 12.492,
+              "confidence": 1
+            },
+            {
+              "word": " never",
+              "start": 12.57,
+              "end": 12.789,
+              "confidence": 0.97
+            },
+            {
+              "word": " found,",
+              "start": 12.914,
+              "end": 13.352,
+              "confidence": 1
+            }
+          ],
+          "text": "The killer was never found,",
+          "language": "en",
+          "start": 11.812,
+          "end": 13.352,
+          "channel": 0,
+          "confidence": 0.99
+        },
+        {
+          "words": [
+            {
+              "word": " leaving",
+              "start": 13.734,
+              "end": 14.031,
+              "confidence": 1
+            },
+            {
+              "word": " behind",
+              "start": 14.07,
+              "end": 14.531,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 14.594,
+              "end": 14.711,
+              "confidence": 1
+            },
+            {
+              "word": " chilling",
+              "start": 14.797,
+              "end": 15.172,
+              "confidence": 0.98
+            },
+            {
+              "word": " mystery",
+              "start": 15.258,
+              "end": 15.719,
+              "confidence": 1
+            },
+            {
+              "word": " that",
+              "start": 16.031,
+              "end": 16.156,
+              "confidence": 1
+            },
+            {
+              "word": " continues",
+              "start": 16.203,
+              "end": 16.75,
+              "confidence": 0.98
+            },
+            {
+              "word": " to",
+              "start": 16.781,
+              "end": 16.891,
+              "confidence": 1
+            },
+            {
+              "word": " fascinate",
+              "start": 17,
+              "end": 17.656,
+              "confidence": 0.87
+            },
+            {
+              "word": " and",
+              "start": 17.672,
+              "end": 17.797,
+              "confidence": 1
+            },
+            {
+              "word": " horrify.",
+              "start": 17.859,
+              "end": 18.5,
+              "confidence": 0.86
+            }
+          ],
+          "text": "leaving behind a chilling mystery that continues to fascinate and horrify.",
+          "language": "en",
+          "start": 13.734,
+          "end": 18.5,
+          "channel": 0,
+          "confidence": 0.97
+        },
+        {
+          "words": [
+            {
+              "word": " Was",
+              "start": 19.156,
+              "end": 19.297,
+              "confidence": 1
+            },
+            {
+              "word": " it",
+              "start": 19.312,
+              "end": 19.438,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 19.439,
+              "end": 19.516,
+              "confidence": 1
+            },
+            {
+              "word": " crime",
+              "start": 19.562,
+              "end": 19.953,
+              "confidence": 0.91
+            },
+            {
+              "word": " of",
+              "start": 19.954,
+              "end": 20.078,
+              "confidence": 1
+            },
+            {
+              "word": " passion",
+              "start": 20.141,
+              "end": 20.688,
+              "confidence": 0.97
+            },
+            {
+              "word": " or",
+              "start": 21.125,
+              "end": 21.234,
+              "confidence": 1
+            },
+            {
+              "word": " the",
+              "start": 21.235,
+              "end": 21.359,
+              "confidence": 1
+            },
+            {
+              "word": " work",
+              "start": 21.406,
+              "end": 21.641,
+              "confidence": 1
+            },
+            {
+              "word": " of",
+              "start": 21.656,
+              "end": 21.781,
+              "confidence": 1
+            },
+            {
+              "word": " a",
+              "start": 21.782,
+              "end": 21.859,
+              "confidence": 0.99
+            },
+            {
+              "word": " disturbed",
+              "start": 21.875,
+              "end": 22.469,
+              "confidence": 0.85
+            },
+            {
+              "word": " mind?",
+              "start": 22.562,
+              "end": 23,
+              "confidence": 1
+            }
+          ],
+          "text": "Was it a crime of passion or the work of a disturbed mind?",
+          "language": "en",
+          "start": 19.156,
+          "end": 23,
+          "channel": 0,
+          "confidence": 0.98
+        },
+        {
+          "words": [
+            {
+              "word": " The",
+              "start": 23.547,
+              "end": 23.656,
+              "confidence": 0.99
+            },
+            {
+              "word": " files",
+              "start": 23.75,
+              "end": 24.156,
+              "confidence": 0.98
+            },
+            {
+              "word": " remain",
+              "start": 24.25,
+              "end": 24.609,
+              "confidence": 0.99
+            },
+            {
+              "word": " open.",
+              "start": 24.781,
+              "end": 25.109,
+              "confidence": 1
+            }
+          ],
+          "text": "The files remain open.",
+          "language": "en",
+          "start": 23.547,
+          "end": 25.109,
+          "channel": 0,
+          "confidence": 0.99
+        }
+      ]
   },
-  {
-    channel: 0,
-    confidence: 0.95,
-    end: 7.566,
-    language: "en",
-    sentence:
-      "One day, her grandma gave her a magical crayon box.",
-    start: 4.305,
-    words: [
-      {
-        confidence: 0.96,
-        end: 4.445,
-        start: 4.305,
-        word: " One",
-      },
-      {
-        confidence: 0.98,
-        end: 4.703,
-        start: 4.504,
-        word: " day,",
-      },
-      {
-        confidence: 0.93,
-        end: 5.086,
-        start: 4.965,
-        word: " her",
-      },
-      {
-        confidence: 0.71,
-        end: 5.484,
-        start: 5.145,
-        word: " grandma",
-      },
-      {
-        confidence: 1,
-        end: 5.824,
-        start: 5.605,
-        word: " gave",
-      },
-      {
-        confidence: 1,
-        end: 5.965,
-        start: 5.844,
-        word: " her",
-      },
-      {
-        confidence: 1,
-        end: 6.105,
-        start: 5.984,
-        word: " a",
-      },
-      {
-        confidence: 0.99,
-        end: 6.648,
-        start: 6.188,
-        word: " magical",
-      },
-      {
-        confidence: 0.92,
-        end: 7.188,
-        start: 6.727,
-        word: " crayon",
-      },
-      {
-        confidence: 1,
-        end: 7.566,
-        start: 7.246,
-        word: " box.",
-      },
-    ],
-  },
-  {
-    channel: 0,
-    confidence: 0.97,
-    end: 10.406,
-    language: "en",
-    sentence: "Each crayon was a different flavor.",
-    start: 8.211,
-    words: [
-      {
-        confidence: 0.94,
-        end: 8.391,
-        start: 8.211,
-        word: " Each",
-      },
-      {
-        confidence: 0.93,
-        end: 8.945,
-        start: 8.469,
-        word: " crayon",
-      },
-      {
-        confidence: 1,
-        end: 9.188,
-        start: 9.07,
-        word: " was",
-      },
-      {
-        confidence: 1,
-        end: 9.328,
-        start: 9.211,
-        word: " a",
-      },
-      {
-        confidence: 0.95,
-        end: 9.852,
-        start: 9.453,
-        word: " different",
-      },
-      {
-        confidence: 1,
-        end: 10.406,
-        start: 9.953,
-        word: " flavor.",
-      },
-    ],
-  },
-  {
-    channel: 0,
-    confidence: 0.94,
-    end: 14.391,
-    language: "en",
-    sentence:
-      "When Lily drew a strawberry, it smelled like strawberries.",
-    start: 10.969,
-    words: [
-      {
-        confidence: 0.95,
-        end: 11.109,
-        start: 10.969,
-        word: " When",
-      },
-      {
-        confidence: 0.98,
-        end: 11.414,
-        start: 11.188,
-        word: " Lily",
-      },
-      {
-        confidence: 1,
-        end: 11.672,
-        start: 11.508,
-        word: " drew",
-      },
-      {
-        confidence: 0.99,
-        end: 11.812,
-        start: 11.688,
-        word: " a",
-      },
-      {
-        confidence: 0.79,
-        end: 12.492,
-        start: 11.852,
-        word: " strawberry,",
-      },
-      {
-        confidence: 1,
-        end: 12.789,
-        start: 12.672,
-        word: " it",
-      },
-      {
-        confidence: 1,
-        end: 13.234,
-        start: 12.852,
-        word: " smelled",
-      },
-      {
-        confidence: 0.99,
-        end: 13.516,
-        start: 13.297,
-        word: " like",
-      },
-      {
-        confidence: 0.76,
-        end: 14.391,
-        start: 13.594,
-        word: " strawberries.",
-      },
-    ],
-  },
-  {
-    channel: 0,
-    confidence: 0.92,
-    end: 17.672,
-    language: "en",
-    sentence: "When she drew the ocean, it tasted salty.",
-    start: 14.836,
-    words: [
-      {
-        confidence: 1,
-        end: 14.953,
-        start: 14.836,
-        word: " When",
-      },
-      {
-        confidence: 0.91,
-        end: 15.117,
-        start: 14.992,
-        word: " she",
-      },
-      {
-        confidence: 1,
-        end: 15.414,
-        start: 15.219,
-        word: " drew",
-      },
-      {
-        confidence: 0.98,
-        end: 15.578,
-        start: 15.453,
-        word: " the",
-      },
-      {
-        confidence: 0.64,
-        end: 16.031,
-        start: 15.695,
-        word: " ocean,",
-      },
-      {
-        confidence: 1,
-        end: 16.469,
-        start: 16.359,
-        word: " it",
-      },
-      {
-        confidence: 0.99,
-        end: 17.031,
-        start: 16.531,
-        word: " tasted",
-      },
-      {
-        confidence: 0.87,
-        end: 17.672,
-        start: 17.234,
-        word: " salty.",
-      },
-    ],
-  },
-  {
-    channel: 0,
-    confidence: 0.96,
-    end: 23.328,
-    language: "en",
-    sentence:
-      "Lily drew the most amazing pictures ever, sharing the flavors with her friends.",
-    start: 18.375,
-    words: [
-      {
-        confidence: 0.97,
-        end: 18.625,
-        start: 18.375,
-        word: " Lily",
-      },
-      {
-        confidence: 0.9,
-        end: 18.875,
-        start: 18.719,
-        word: " drew",
-      },
-      {
-        confidence: 0.98,
-        end: 19.016,
-        start: 18.906,
-        word: " the",
-      },
-      {
-        confidence: 1,
-        end: 19.484,
-        start: 19.156,
-        word: " most",
-      },
-      {
-        confidence: 0.86,
-        end: 19.984,
-        start: 19.562,
-        word: " amazing",
-      },
-      {
-        confidence: 0.99,
-        end: 20.5,
-        start: 20.016,
-        word: " pictures",
-      },
-      {
-        confidence: 1,
-        end: 21,
-        start: 20.703,
-        word: " ever,",
-      },
-      {
-        confidence: 0.95,
-        end: 21.828,
-        start: 21.484,
-        word: " sharing",
-      },
-      {
-        confidence: 1,
-        end: 21.969,
-        start: 21.844,
-        word: " the",
-      },
-      {
-        confidence: 0.99,
-        end: 22.438,
-        start: 21.984,
-        word: " flavors",
-      },
-      {
-        confidence: 1,
-        end: 22.625,
-        start: 22.5,
-        word: " with",
-      },
-      {
-        confidence: 0.98,
-        end: 22.75,
-        start: 22.626,
-        word: " her",
-      },
-      {
-        confidence: 0.87,
-        end: 23.328,
-        start: 22.828,
-        word: " friends.",
-      },
-    ],
-  },
-  {
-    channel: 0,
-    confidence: 0.98,
-    end: 27.203,
-    language: "en",
-    sentence:
-      "She learned that being creative can be a tasty adventure.",
-    start: 23.75,
-    words: [
-      {
-        confidence: 0.99,
-        end: 23.859,
-        start: 23.75,
-        word: " She",
-      },
-      {
-        confidence: 0.95,
-        end: 24.266,
-        start: 23.969,
-        word: " learned",
-      },
-      {
-        confidence: 0.91,
-        end: 24.422,
-        start: 24.281,
-        word: " that",
-      },
-      {
-        confidence: 0.98,
-        end: 24.781,
-        start: 24.5,
-        word: " being",
-      },
-      {
-        confidence: 1,
-        end: 25.422,
-        start: 24.828,
-        word: " creative",
-      },
-      {
-        confidence: 1,
-        end: 25.688,
-        start: 25.531,
-        word: " can",
-      },
-      {
-        confidence: 1,
-        end: 25.828,
-        start: 25.703,
-        word: " be",
-      },
-      {
-        confidence: 1,
-        end: 25.969,
-        start: 25.844,
-        word: " a",
-      },
-      {
-        confidence: 0.99,
-        end: 26.5,
-        start: 26.047,
-        word: " tasty",
-      },
-      {
-        confidence: 1,
-        end: 27.203,
-        start: 26.609,
-        word: " adventure.",
-      },
-    ],
-  },
-],
   images: [
   {
     duration: 4.324,
     image:
-      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977fy6vb5k6frs6vgqyhygq397m62ar/images/PJ2-1753194118280-0.png",
+      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977bd0m5zz3s4vdzs91v5gych7mf89b/images/PJ-1753720298349-0.png",
     start: -0.19999999999999998,
   },
   {
     duration: 6.701000000000001,
     image:
-      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977fy6vb5k6frs6vgqyhygq397m62ar/images/PJ2-1753194118290-1.png",
+      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977bd0m5zz3s4vdzs91v5gych7mf89b/images/PJ-1753720298350-1.png",
     start: 4.005,
   },
   {
     duration: 7.303000000000003,
     image:
-      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977fy6vb5k6frs6vgqyhygq397m62ar/images/PJ2-1753194118290-2.png",
+      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977bd0m5zz3s4vdzs91v5gych7mf89b/images/PJ-1753720298350-2.png",
     start: 10.668999999999999,
   },
   {
     duration: 9.428,
     image:
-      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977fy6vb5k6frs6vgqyhygq397m62ar/images/PJ2-1753194118290-3.png",
+      "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j977bd0m5zz3s4vdzs91v5gych7mf89b/images/PJ-1753720298351-3.png",
     start: 18.075,
   },
 ],
@@ -511,6 +890,7 @@ const videoData = {
 }
 
 const captions = videoData.captionJson
+const utterances = captions.utterances
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -518,7 +898,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
-        durationInFrames={parseInt(captions[captions.length - 1].end.toFixed(0)) * 30}
+        durationInFrames={parseInt(utterances[utterances.length - 1].end.toFixed(0)) * 30}
         fps={30}
         width={720}
         height={1080}
