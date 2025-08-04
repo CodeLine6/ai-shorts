@@ -9,19 +9,31 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 import z from "zod"
 
 const Signin = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const searchParams = useSearchParams()
 
     const { toast } = useToast()
     const router = useRouter()
     type SignInFormValues = z.infer<typeof signInSchema>
 
+    // Check for session expiration message
+    useEffect(() => {
+        const message = searchParams.get('message')
+        if (message === 'session-expired') {
+            toast({
+                title: "Session Expired",
+                description: "Your session has been invalidated. Please sign in again.",
+                variant: "destructive"
+            })
+        }
+    }, [searchParams, toast])
 
     const form = useForm<SignInFormValues>({
         resolver: zodResolver(signInSchema),
@@ -42,10 +54,13 @@ const Signin = () => {
                     variant: "destructive"
                 })
             }
-            else if (response.error.startsWith('/verify/')) {
+            else if (response.error.includes('/verify/')) {
                 const username = response.error.split('/verify/')[1]
                 router.push(`/verify/${username}`)
-                return
+                toast({
+                    title: "Account Not Verified",
+                    description: "We sent a verification code to your email. Please check your inbox and enter the code to verify your account.",
+                })
             }
             else {
                 toast({

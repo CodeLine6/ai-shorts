@@ -14,9 +14,43 @@ export default defineSchema({
         credits:v.number(),
         verifyCode:v.string(),
         verifyCodeExpiry:v.string(),
+        referralCode:v.string(),
+        referredBy:v.optional(v.id('users')),
+        totalReferrals:v.number(),
+        referralCreditsEarned:v.number(),
+        referralTier:v.number(),
+        hasEverPurchased:v.optional(v.boolean()),
+        firstPurchaseAt:v.optional(v.string()),
+        totalPurchased:v.optional(v.number()),
+        isAdmin:v.optional(v.boolean()),
     }).index("by_email", ["email"])
-  .index("by_username", ["username"]),
+  .index("by_username", ["username"])
+  .index("by_referralCode", ["referralCode"]),
   
+    referrals: defineTable({
+        referrerId: v.id('users'),
+        refereeId: v.id('users'),
+        refereeEmail: v.string(),
+        status: v.string(),
+        signupRewardCredited: v.boolean(),
+        purchaseRewardCredited: v.boolean(),
+        createdAt: v.string(),
+        signupCompletedAt: v.optional(v.string()),
+        firstPurchaseAt: v.optional(v.string()),
+    }).index("by_referrerId", ["referrerId"])
+      .index("by_refereeId", ["refereeId"]),
+  
+    purchases: defineTable({
+        userId: v.id('users'),
+        amount: v.number(),
+        credits: v.number(),
+        paymentMethod: v.string(),
+        transactionId: v.string(),
+        status: v.string(),
+        createdAt: v.string(),
+        isFirstPurchase: v.boolean(),
+    }).index("by_userId", ["userId"])
+      .index("by_transactionId", ["transactionId"]),
     videoData : defineTable({
         title: v.string(),
         topic: v.string(),

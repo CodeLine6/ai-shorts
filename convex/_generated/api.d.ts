@@ -13,6 +13,10 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin from "../admin.js";
+import type * as migrations from "../migrations.js";
+import type * as purchases from "../purchases.js";
+import type * as referrals from "../referrals.js";
 import type * as user from "../user.js";
 import type * as videoData from "../videoData.js";
 
@@ -25,6 +29,10 @@ import type * as videoData from "../videoData.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  migrations: typeof migrations;
+  purchases: typeof purchases;
+  referrals: typeof referrals;
   user: typeof user;
   videoData: typeof videoData;
 }>;

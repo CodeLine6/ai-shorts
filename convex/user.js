@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation,query } from "./_generated/server";
+import { generateReferralCode, createReferralRecord, creditSignupRewardHelper } from "./referrals.js";
 
 export const CreateNewUser = mutation({
     args : {
@@ -8,9 +9,10 @@ export const CreateNewUser = mutation({
         hashedPassword: v.string(),
         firstName: v.string(),
         lastName: v.string(),
-        contactNumber: v.string(), 
+        contactNumber: v.string(),
+        referralCode: v.optional(v.string()),
     }
-    , handler: async ({db}, {email, username, hashedPassword, firstName, lastName, contactNumber}) => {
+    , handler: async ({db}, {email, username, hashedPassword, firstName, lastName, contactNumber, referralCode}) => {
 
         const existingUserByUsername = await db.query("users").filter(q => q.eq(q.field("username"), username)).first();
 
@@ -35,6 +37,23 @@ export const CreateNewUser = mutation({
         expiryDate.setHours(expiryDate.getHours() + 1);
 
         try {
+        // Import referral code generator        
+        let referrerId = undefined;
+        let initialCredits = 10; // Default credits
+        
+        // Check if referral code is provided and valid
+        if (referralCode) {
+            const referrer = await db
+                .query("users")
+                .withIndex("by_referralCode", q => q.eq("referralCode", referralCode))
+                .first();
+                
+            if (referrer && referrer.isVerified) {
+                referrerId = referrer._id;
+                initialCredits = 20; // Double credits for referred users
+            }
+        }
+        
         const newUser = await db.insert("users", {
             email,
             isVerified: false,
@@ -43,26 +62,42 @@ export const CreateNewUser = mutation({
             firstName,
             lastName,
             contactNumber,
-            credits:3,
+            credits: initialCredits,
             verifyCode,
             verifyCodeExpiry: expiryDate.toISOString(),
+            referralCode: generateReferralCode(firstName),
+            referredBy: referrerId,
+            totalReferrals: 0,
+            referralCreditsEarned: 0,
+            referralTier: 0,
+            hasEverPurchased: false,
+            totalPurchased: 0,
         });
+
+        // Create referral relationship if there's a valid referrer
+        if (referrerId) {
+            await createReferralRecord(db, {
+                referrerId,
+                refereeId: newUser,
+                refereeEmail: email,
+            });
+        }
 
         return {
             success: true,
             message: "User created successfully",
-            verifyCode
+            verifyCode,
+            bonusCredits: initialCredits > 3,
         };
 
         }
         catch (err) {
+            console.error(err.message);
             return {
                 success: false,
                 message: "Error creating user"
             };
         }
-        
-
     }
 })
 
@@ -105,6 +140,15 @@ export const UpdateUser = mutation({
 
         try {
             await db.patch(existingUser._id, updates);
+            
+            // If user is being verified and was referred, credit signup reward
+            if (updates.isVerified === true && !existingUser.isVerified && existingUser.referredBy) {
+                await creditSignupRewardHelper(db, {
+                    referrerId: existingUser.referredBy,
+                    refereeId: existingUser._id,
+                });
+            }
+            
             return { success: true, message: "User updated successfully." };
         } catch (err) {
             console.log("Error updating user:", err);
@@ -113,11 +157,18 @@ export const UpdateUser = mutation({
     }
 });
 
+export const subscribeToUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    return ctx.db.get(userId);
+  },
+});
+
 export const GetUser = query({
-    args : {
-        identifier: v.string(),
-    },
-    handler : async ({db}, {identifier}) => {
+  args : {
+    identifier: v.string(),
+  },
+  handler : async ({db}, {identifier}) => {
          const normalizedIdentifier = identifier.toLowerCase().trim();
 
         // Try to find user by username first
@@ -174,5 +225,79 @@ export const GetUserById = mutation({
     handler: async({db}, args) => {
         const user = await db.query("users").filter(q => q.eq(q.field("_id"), args.userId)).first();
         return user;
+    }
+});
+
+// Query to validate if user exists by ID - used for session validation
+export const ValidateUserExists = query({
+    args: {
+        userId: v.id('users')
+    },
+    handler: async ({db}, {userId}) => {
+        try {
+            const user = await db.get(userId);
+            return user ? {
+                exists: true,
+                user: {
+                    _id: user._id,
+                    email: user.email,
+                    isVerified: user.isVerified,
+                    username: user.username,
+ 
+                    firstName: user.firstName,
+                    lastName: user.lastName, 
+                    contactNumber: user.contactNumber,
+                    credits: user.credits,
+                    image: user.image,
+                    referralCode: user.referralCode,
+                    referredBy: user.referredBy,
+                    totalReferrals: user.totalReferrals,
+                    referralCreditsEarned: user.referralCreditsEarned,
+                    referralTier: user.referralTier,
+                    isAdmin: user.isAdmin
+                }
+            } : { exists: false, user: null };
+        } catch (error) {
+            // Return exists: false if user ID is invalid or user doesn't exist
+            return { exists: false, user: null };
+        }
+    }
+});
+
+// Get all users (admin only)
+export const GetAllUsers = query({
+    args: {},
+    handler: async ({ db }) => {
+        try {
+            const users = await db.query("users").collect();
+            return {
+                success: true,
+                data: users.map(user => ({
+                    _id: user._id,
+                    email: user.email,
+                    isVerified: user.isVerified,
+                    username: user.username,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    contactNumber: user.contactNumber,
+                    credits: user.credits,
+                    image: user.image,
+                    referralCode: user.referralCode,
+                    referredBy: user.referredBy,
+                    totalReferrals: user.totalReferrals,
+                    referralCreditsEarned: user.referralCreditsEarned,
+                    referralTier: user.referralTier,
+                    isAdmin: user.isAdmin,
+                    hasEverPurchased: user.hasEverPurchased,
+                    createdAt: user._creationTime,
+                }))
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: "Error fetching users",
+                error: error.message
+            };
+        }
     }
 });

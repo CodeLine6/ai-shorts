@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import axios, {AxiosError} from "axios" 
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useDebounceCallback } from "usehooks-ts"
@@ -20,11 +20,17 @@ const Page = () => {
     const [username, setUsername] = useState("")
     const [usernameMessage, setUsernameMessage] = useState("")
     const [isCheckingUsername, setIsCheckingUsername] = useState(false)
+    
+    const [referralCode, setReferralCode] = useState("")
+    const [referralMessage, setReferralMessage] = useState("")
+    const [isCheckingReferral, setIsCheckingReferral] = useState(false)
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const debounced = useDebounceCallback(setUsername, 500)
+    const debouncedReferral = useDebounceCallback(setReferralCode, 500)
     const { toast } = useToast()
     const router = useRouter()
+    const searchParams = useSearchParams()
 
     type SignupFormValues = z.infer<typeof signUpSchema>
 
@@ -36,9 +42,21 @@ const Page = () => {
             password: "",
             contactNumber: "",
             firstName: "",
-            lastName: ""
+            lastName: "",
+            referralCode: ""
         }
     })
+
+    // Check for referral code in URL on component mount
+    useEffect(() => {
+        const refParam = searchParams?.get('ref')
+        if (refParam) {
+            const upperCaseRef = refParam.toUpperCase()
+            form.setValue('referralCode', upperCaseRef)
+            setReferralCode(upperCaseRef)
+            debouncedReferral(upperCaseRef)
+        }
+    }, [searchParams, form, debouncedReferral])
 
     useEffect(() => {
         const checkUsrnameAvailability = async () => {
@@ -60,6 +78,33 @@ const Page = () => {
 
         checkUsrnameAvailability()
     }, [username])
+
+    useEffect(() => {
+        const checkReferralCode = async () => {
+            if (referralCode && referralCode.length >= 4) {
+                setIsCheckingReferral(true)
+                setReferralMessage("")
+                try {
+                    const response = await axios.post("/api/check-referral-code", {
+                        referralCode: referralCode.trim().toUpperCase()
+                    })
+                    if (response.data.success) {
+                        setReferralMessage(`✓ Valid referral from ${response.data.referrerName}`)
+                    }
+                }
+                catch (err) {
+                    const axiosError = err as AxiosError<{message: string}>
+                    setReferralMessage(axiosError.response?.data?.message ?? 'Invalid referral code')
+                } finally {
+                    setIsCheckingReferral(false)
+                }
+            } else if (referralCode === "") {
+                setReferralMessage("")
+            }
+        }
+
+        checkReferralCode()
+    }, [referralCode])
 
 
     const onSubmit = async (data: SignupFormValues) => {
@@ -193,6 +238,36 @@ const Page = () => {
                                 <FormControl>
                                     <Input placeholder="Contact Number" {...field} />
                                 </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="referralCode"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Referral Code (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        placeholder="Enter referral code for bonus credits" 
+                                        {...field}
+                                        onChange={e => {
+                                            const value = e.target.value.toUpperCase()
+                                            field.onChange(value)
+                                            debouncedReferral(value)
+                                        }}
+                                    />
+                                </FormControl>
+                                <div className="flex items-center gap-2">
+                                    {isCheckingReferral && <Loader2 className="animate-spin h-4 w-4" />}
+                                    {referralMessage && (
+                                        <p className={`text-sm ${referralMessage.includes('✓') ? "text-green-600" : "text-red-600"}`}>
+                                            {referralMessage}
+                                        </p>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500">Get 6 credits instead of 3 with a valid referral code!</p>
                                 <FormMessage />
                             </FormItem>
                         )}

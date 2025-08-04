@@ -57,10 +57,9 @@ const VerifyAccount = () => {
             <CardTitle className="text-4xl font-extrabold tracking-tight">
                 Verify Message
             </CardTitle>
-            <CardDescription className="mb-4">Enter verification code sent to your email</CardDescription>
-
+            <CardDescription>Enter verification code sent to your email</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className='!mt-0'>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                     <FormField
@@ -70,18 +69,15 @@ const VerifyAccount = () => {
                             <FormItem>
                                 <FormLabel>One-Time Password</FormLabel>
                                 <FormControl>
-                                    <InputOTP maxLength={6} {...field}>
+                                    <InputOTP maxLength={6} {...field} containerClassName='justify-around'>
                                         <InputOTPGroup>
                                             <InputOTPSlot index={0} />
                                             <InputOTPSlot index={1} />
-                                        </InputOTPGroup>
-                                        <InputOTPSeparator />
-                                        <InputOTPGroup>
                                             <InputOTPSlot index={2} />
-                                            <InputOTPSlot index={3} />
                                         </InputOTPGroup>
                                         <InputOTPSeparator />
                                         <InputOTPGroup>
+                                            <InputOTPSlot index={3} />
                                             <InputOTPSlot index={4} />
                                             <InputOTPSlot index={5} />
                                         </InputOTPGroup>

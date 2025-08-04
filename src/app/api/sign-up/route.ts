@@ -8,7 +8,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request: NextRequest) {
     try {
-        const { username, email, password, firstName, lastName, contactNumber } = await request.json();
+        const { username, email, password, firstName, lastName, contactNumber, referralCode } = await request.json();
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -19,9 +19,11 @@ export async function POST(request: NextRequest) {
             firstName,
             lastName,
             contactNumber,
+            referralCode,
         });
 
         if (!result.success) {
+            console.log(result.message);
             return Response.json({
                 success: false,
                 message: result.message
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
         }
 
         // send verification email
-        /* const emailResponse = await sendVerificationEmail({ username, email, verifyCode: result.verifyCode! });
+        const emailResponse = await sendVerificationEmail({ username, email, verifyCode: result.verifyCode! });
         if (!emailResponse.success) {
             return Response.json({
                 success: false,
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
             }, {
                 status: 500
             });
-        } */
+        }
 
         return Response.json({
             success: true,

@@ -5,6 +5,7 @@ import { CircleDollarSign } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import React from 'react'
 import { api } from '../../../../../convex/_generated/api';
+import { useToast } from '@/hooks/use-toast';
 
 export const creditPlans = [
     {
@@ -27,27 +28,49 @@ export const creditPlans = [
         credits: 500,
         price: 30
     }
-
 ]
 
 const page = () => {
   const { data: session, update } = useSession();
-  const user = session?.user
+  const user = session?.user;
+  const { toast } = useToast();
+  const processPurchase = useMutation(api.purchases.ProcessPurchase);
 
-  const onPaymentSuccess = async (cost: number,credits: number) => {
-    const updateUserCredits = useMutation(api.user.UpdateUserCredits);
-    const result = await updateUserCredits({
-        newCredits: user?.credits + credits,
-        userId: user?._id
-    })
+  const onPaymentSuccess = async (cost: number, credits: number, transactionId: string) => {
+    try {
+      // Use the robust purchase system
+      const result = await processPurchase({
+        userId: user?._id as any,
+        amount: cost,
+        credits: credits,
+        paymentMethod: "PayPal",
+        transactionId: transactionId,
+      });
 
-    update({
-        user: {
-            ...user,
-            credits: user?.credits + credits
+      if (result.success) {
+
+        // Show success message
+        let message = `Successfully purchased ${credits} credits!`;
+        if ((result as any).referralReward?.success) {
+          message += ` Your referrer earned ${(result as any).referralReward.creditsAwarded} bonus credits.`;
         }
-    })
-  }
+        
+        toast({
+          title: "Purchase Successful!",
+          description: message,
+        });
+      } else {
+        throw new Error(result.message || "Purchase failed");
+      }
+    } catch (error) {
+      console.error("Error processing purchase:", error);
+      toast({
+        title: "Purchase Failed",
+        description: "There was an error processing your purchase. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div>
@@ -59,7 +82,7 @@ const page = () => {
             </div>
             <h2 className='font-bold text-3xl'>{user?.credits} Credits</h2>
         </div>
-        <p className="text-sm p-5 text-gray-500 max-w-2xl " >When your credit balance reaches 0, you will not be able to create more videos.</p>
+        <p className="text-sm p-5 text-gray-500 max-w-2xl">When your credit balance reaches 0, you will not be able to create more videos.</p>
         <div className='mt-5'>
             <h2 className='font-bold text-2xl'>Buy More Credits</h2>
             <div>
@@ -71,7 +94,7 @@ const page = () => {
                         </h2>
                         <div className="flex gap-2 items-center">
                             <h2 className="font-medium text-xl">${item.price}</h2>
-                            <PayPalButtons  style={{ layout: "horizontal" }} 
+                            <PayPalButtons style={{ layout: "horizontal" }} 
                                 createOrder={(data, actions) => {
                                     /* @ts-ignore */
                                     return actions?.order?.create({
@@ -85,8 +108,11 @@ const page = () => {
                                         ]
                                     });
                                 }}
-                                
-                                onApprove={() => onPaymentSuccess(item.price, item.credits)}
+                                onApprove={(data, actions) => {
+                                    // Get transaction ID from PayPal
+                                    const transactionId = data.orderID || `paypal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                                    return onPaymentSuccess(item.price, item.credits, transactionId);
+                                }}
                             />               
                         </div>
                     </div>

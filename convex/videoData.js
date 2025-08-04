@@ -84,3 +84,38 @@ export const GetVideoRecord = query({
         return result
     }
 })
+// Get all videos (admin only)
+export const GetAllVideos = query({
+    args: {},
+    handler: async ({ db }) => {
+        try {
+            const videos = await db.query("videoData").collect();
+            return {
+                success: true,
+                data: videos.map(video => ({
+                    _id: video._id,
+                    title: video.title,
+                    topic: video.topic,
+                    script: video.script,
+                    videoStyle: video.videoStyle,
+                    caption: video.caption,
+                    voice: video.voice,
+                    uid: video.uid,
+                    createdBy: video.createdBy,
+                    status: video.status,
+                    audioUrl: video.audioUrl,
+                    images: video.images,
+                    captionJson: video.captionJson,
+                    downloadUrl: video.downloadUrl,
+                    createdAt: video._creationTime,
+                }))
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: "Error fetching videos",
+                error: error.message
+            };
+        }
+    }
+});

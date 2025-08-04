@@ -18,5 +18,6 @@ export const profileSchema = z.object({
 export const signUpSchema = profileSchema.extend({
     username : userNameValidation,
     password: z.string().min(6, {message: 'Password must be at least 6 characters'}),
-    image: z.string().url({message: 'Please enter a valid image url'}).or(z.literal('')).optional()
+    image: z.string().url({message: 'Please enter a valid image url'}).or(z.literal('')).optional(),
+    referralCode: z.string().optional()
 })
