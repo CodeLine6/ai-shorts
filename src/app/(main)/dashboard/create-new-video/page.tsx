@@ -403,7 +403,7 @@ function Page() {
             });
             
             const result = await axios.post('/api/generate-video-data', {
-                ...formData,
+                ...Object.fromEntries(Object.entries(formData).map(([key, value]) => [key, value.value])),
                 recordId: resp,
             });
 
