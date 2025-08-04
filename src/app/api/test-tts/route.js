@@ -1,6 +1,10 @@
 import { a44Client } from '@/config/AiModal';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
+// Ensure route is always dynamic and never cached
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Handle POST requests
 export async function GET(req, res) {
   const client = new ElevenLabsClient({

@@ -79,7 +79,7 @@ export const authOptions : AuthOptions = {
                             verifyCode,
                             verifyCodeExpiry: expiryDate.toISOString()
                         });
-                        //await sendVerificationEmail(user.email, verifyCode)
+                        await sendVerificationEmail(user.email, verifyCode)
                         throw new Error(`/verify/${user.username}`)
                     }
                     return {

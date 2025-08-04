@@ -4,6 +4,10 @@ import { userNameValidation } from "@/schemas/userSchema";
 import { api } from "../../../../convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
+// Ensure route is always dynamic and never cached
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const UsernameQuerySchema = z
     .object({
         username: userNameValidation

@@ -15,8 +15,9 @@ import { useForm } from "react-hook-form"
 import { useDebounceCallback } from "usehooks-ts"
 import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 import * as z from "zod"
+import dynamic from "next/dynamic"
 
-const Page = () => {
+const SignUpComponent = () => {
     const [username, setUsername] = useState("")
     const [usernameMessage, setUsernameMessage] = useState("")
     const [isCheckingUsername, setIsCheckingUsername] = useState(false)
@@ -282,5 +283,7 @@ const Page = () => {
         </CardContent>
     </Card>
 }
+
+const Page = dynamic(() => Promise.resolve(SignUpComponent), { ssr: false });
 
 export default Page

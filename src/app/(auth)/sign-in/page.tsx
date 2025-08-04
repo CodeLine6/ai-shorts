@@ -14,8 +14,9 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 import z from "zod"
+import dynamic from "next/dynamic"
 
-const Signin = () => {
+const SigninComponent = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const searchParams = useSearchParams()
 
@@ -130,5 +131,7 @@ const Signin = () => {
         </CardContent>
     </Card>
 }
+
+const Signin = dynamic(() => Promise.resolve(SigninComponent), { ssr: false });
 
 export default Signin
