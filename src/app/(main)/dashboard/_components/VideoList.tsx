@@ -23,7 +23,7 @@ function VideoList() {
       // All user videos
       const userVideoList = await convex.query(api.videoData.GetUsersVideo, {
         //@ts-ignore
-        uid: user?._id,
+        uid: user._id,
       })
 
       setVideoList(userVideoList)

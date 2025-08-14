@@ -4,17 +4,13 @@ import { mutation, query } from "./_generated/server";
 export const CreateVideoData = mutation({
     args : {
             title: v.string(),
-            topic: v.string(),
-            script: v.object({
-                content: v.string(),
-                tts_text: v.string()
-            }),
+            topic: v.optional(v.string()),
             videoStyle: v.string(),
             caption: v.any(),
-            voice: v.object({
+            voice: v.optional(v.object({
                 voiceId: v.string(),
                 name: v.string()
-            }),
+            })),
             uid: v.id('users'),
             createdBy: v.string(),
             credits: v.number()
@@ -23,7 +19,6 @@ export const CreateVideoData = mutation({
         const result = await db.insert('videoData',{
             title: args.title,
             topic:args.topic,
-            script:args.script.content,
             videoStyle:args.videoStyle,
             caption:args.caption,
             voice:args.voice,
@@ -49,6 +44,7 @@ export const UpdateVideoRecord = mutation({
             start: v.any(),
             duration: v.any()
         }))),
+        script: v.string(),
         status: v.optional(v.string()),
         captionJson: v.optional(v.any()),
         downloadUrl: v.optional(v.string())
@@ -59,6 +55,7 @@ export const UpdateVideoRecord = mutation({
             images: args.images,
             captionJson: args.captionJson,
             status: args.status,
+            script: args.script,
             downloadUrl: args.downloadUrl
         });
         return result

@@ -1,109 +1,115 @@
 "use client"
 import React, { useEffect } from 'react'
-import { AbsoluteFill, Audio, interpolate, Sequence, useCurrentFrame, useVideoConfig, spring } from 'remotion'
+import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring } from 'remotion'
+import {
+  linearTiming,
+  springTiming,
+  TransitionSeries,
+} from "@remotion/transitions";
 import { sentence, utterance, word } from '../../../convex/schema'
 
-const RemotionComposition = ({ videoData }: { videoData: any }) => {videoData
-    const captions: { sentences: sentence[], utterances: utterance[]} = videoData?.captionJson
-    const sentences = captions.sentences;
-    const {fps} = useVideoConfig()
-    const imageList = videoData?.images
-    const frame = useCurrentFrame();
-    const captionClass = videoData.caption.style
+import { fade } from "@remotion/transitions/fade";
+import { wipe } from "@remotion/transitions/wipe";
 
-    useEffect(() => {
-        videoData && getDurationFrame()
-    }, [videoData])
-    const getDurationFrame = () => {
-      const totalDuration = (sentences[sentences.length - 1].end) * fps
-      //setDurationInFrames(Number(totalDuration.toFixed(0)) + 100)
-      return totalDuration
-    }
+const RemotionComposition = ({ videoData }: { videoData: any }) => {
+  videoData
+  const captions: { sentences: sentence[], utterances: utterance[] } = videoData?.captionJson
+  const sentences = captions.sentences;
+  const { fps } = useVideoConfig()
+  const imageList = videoData?.images
+  const frame = useCurrentFrame();
+  const captionClass = videoData.caption.style
 
-    const getCurrentCaption = () => {
-       const singleCaption: word[] = [] 
-       sentences?.forEach((caption : sentence) => {
-         singleCaption.push(...caption.words)
-       })
-       const currentTime = frame/fps;
+  useEffect(() => {
+    videoData && getDurationFrame()
+  }, [videoData])
+  const getDurationFrame = () => {
+    const totalDuration = (sentences[sentences.length - 1].end) * fps
+    //setDurationInFrames(Number(totalDuration.toFixed(0)) + 100)
+    return totalDuration
+  }
 
-       const currentWord = singleCaption.find((word : word) => word.start <= currentTime && word.end >= currentTime)
-       return currentWord
+  const getCurrentCaption = () => {
+    const singleCaption: word[] = []
+    sentences?.forEach((caption: sentence) => {
+      singleCaption.push(...caption.words)
+    })
+    const currentTime = frame / fps;
 
-    }
+    const currentWord = singleCaption.find((word: word) => word.start <= currentTime && word.end >= currentTime)
+    return currentWord
+
+  }
 
   return (
     <div>
-        <AbsoluteFill>
-            {imageList?.map((image : any, index : number) => {
-                const startTime = image.start * fps
-                const duration = image.duration * fps
-                
-                const opacity = spring({
-                  frame: frame - startTime,
-                  fps,
-                  config: {
-                    damping: 200,
-                    stiffness: 100,
-                    mass: 0.5,
-                  },
-                });
+      <AbsoluteFill>
+        <TransitionSeries>
+          {imageList?.map((image: any, index: number) => {
+            const duration = image.duration * fps
 
-                return (
-                    <Sequence key={index} from={startTime} durationInFrames={duration} >
-                      <AbsoluteFill style={{ opacity }}>
-                        <img src={image.image} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                        </AbsoluteFill>
-                    </Sequence>
-                )
-            })}
-        </AbsoluteFill>
-        <AbsoluteFill style={{
-            justifyContent: 'center',
-            top: undefined,
-            bottom: '-310px',
-            textAlign: 'center',
-        }}>
-            <h2 className={`${captionClass} text-6xl`}>
-              {((wordObj = getCurrentCaption()) => {
-                if (!wordObj) {
-                  return null;
-                }
-                const wordStartFrame = Math.floor(wordObj.start * fps);
-                const wordEndFrame = Math.floor(wordObj.end * fps);
+            return (
+              <>
+                <TransitionSeries.Sequence key={index} durationInFrames={duration + 40}>
+                  <AbsoluteFill>
+                    <img src={image.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </AbsoluteFill>
+                </TransitionSeries.Sequence>
+                {index !== imageList.length - 1 && <TransitionSeries.Transition
+                  timing={springTiming({durationInFrames: 20})}
+                  presentation={(index % 2 === 0) ? fade() : wipe()}
+                />}
+              </>
+            )
+          })}
+        </TransitionSeries>
+      </AbsoluteFill>
+      <AbsoluteFill style={{
+        justifyContent: 'center',
+        top: undefined,
+        bottom: '-310px',
+        textAlign: 'center',
+      }}>
+        <h2 className={`${captionClass} text-6xl`}>
+          {((wordObj = getCurrentCaption()) => {
+            if (!wordObj) {
+              return null;
+            }
+            const wordStartFrame = Math.floor(wordObj.start * fps);
+            const wordEndFrame = Math.floor(wordObj.end * fps);
 
-                const opacity = interpolate(frame, [wordStartFrame, wordStartFrame + 10], [0.5, 1], {
-                  extrapolateLeft: 'clamp',
-                  extrapolateRight: 'clamp',
-                });
+            const opacity = interpolate(frame, [wordStartFrame, wordStartFrame + 10], [0.5, 1], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
+            });
 
-                const scale = spring({
-                  frame: frame - wordStartFrame,
-                  fps,
-                  config: {
-                    damping: 200,
-                    stiffness: 100,
-                    mass: 0.5,
-                  },
-                  durationInFrames: 10,
-                  from: 0.8
-                });
+            const scale = spring({
+              frame: frame - wordStartFrame,
+              fps,
+              config: {
+                damping: 200,
+                stiffness: 100,
+                mass: 0.5,
+              },
+              durationInFrames: 10,
+              from: 0.8
+            });
 
-                return (
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      transform: `scale(${scale})`,
-                      marginRight: '0.5em', // Add some space between words
-                    }}
-                  >
-                    {wordObj.word}
-                  </span>
-                );
-              })()}
-            </h2>
-        </AbsoluteFill>
-            {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
+            return (
+              <span
+                style={{
+                  display: 'inline-block',
+                  transform: `scale(${scale})`,
+                  marginRight: '0.5em', // Add some space between words
+                }}
+              >
+                {wordObj.word}
+              </span>
+            );
+          })()}
+        </h2>
+      </AbsoluteFill>
+      {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
     </div>
   )
 }

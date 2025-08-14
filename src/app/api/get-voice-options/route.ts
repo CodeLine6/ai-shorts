@@ -8,11 +8,19 @@ export async function GET() {
   const availableVoices = await client.voices.search({
     includeTotalCount: true
   });
+
+  
   return Response.json({
     success: true,
     voices: availableVoices.voices.map((voice) => ({
         voiceId: voice.voiceId,
-        name: voice.name
+        name: voice.name,
+        previewUrl: voice.previewUrl,
+        accent: voice.labels?.accent,
+        gender: voice.labels?.gender,
+        age: voice.labels?.age,
+        use_case: voice.labels?.use_case
+
     }))
   });
 

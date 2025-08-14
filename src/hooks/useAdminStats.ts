@@ -11,7 +11,7 @@ export const useAdminStats = () => {
   const userGrowthData = useQuery(api.admin.getUserGrowthData);
   const videoStyleData = useQuery(api.admin.getVideoStyleDistribution);
   const revenueData = useQuery(api.admin.getRevenueOverTime);
-  const topReferrers = useQuery(api.admin.getTopReferrers);
+  const topReferrers = useQuery(api.admin.getTopReferrers, { });
 
   useEffect(() => {
     if (adminStats) {

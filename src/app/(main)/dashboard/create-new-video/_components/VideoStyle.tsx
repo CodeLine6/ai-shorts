@@ -1,6 +1,6 @@
+import { FormState } from '../types';
 import Image from 'next/image'
 import React, { useState } from 'react'
-import { FormState } from '../page';
 
 export const videoStyles = [
     {

@@ -1,9 +1,60 @@
 "use client";
 
 import { useAdminStats } from "@/hooks/useAdminStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Users, Video, DollarSign, Share2, TrendingUp, TrendingDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
+
+export const description = "A pie chart with no separator"
+
+const chartData = [
+  { videoStyle:"Realistic", count:1, fill:"var(--color-chrome)"},
+  { videoStyle:"Optimistic", count:2, fill:"var(--color-chrome)"},
+  { videoStyle:"Pessimistic", count:3, fill:"var(--color-chrome)"},
+  { videoStyle:"Realistic", count:4, fill:"var(--color-chrome)"},
+]
+
+const chartConfig = {
+  visitors: {
+    label: "Visitors",
+  },
+  chrome: {
+    label: "Chrome",
+    color: "var(--chart-1)",
+  },
+  safari: {
+    label: "Safari",
+    color: "var(--chart-2)",
+  },
+  firefox: {
+    label: "Firefox",
+    color: "var(--chart-3)",
+  },
+  edge: {
+    label: "Edge",
+    color: "var(--chart-4)",
+  },
+  other: {
+    label: "Other",
+    color: "var(--chart-5)",
+  },
+} satisfies ChartConfig
+
 
 export default function AdminDashboard() {
   const { stats, loading, error } = useAdminStats();
@@ -30,6 +81,10 @@ export default function AdminDashboard() {
     ...item,
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }));
+
+  const pieChartConfig = {
+
+  }
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -132,34 +187,39 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         {/* Video Style Distribution */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Video Style Distribution</CardTitle>
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-0">
+            <CardTitle>Video Style</CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer
+              config={{}}
+              className="mx-auto aspect-square max-h-[250px]"
+            >
               <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
                 <Pie
-                  data={stats.videoStyles}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  data={stats.videoStyles.map((item: any, index: number) => ({
+                    videoStyle: item.style,
+                    count: item.count,
+                    fill: COLORS[index % COLORS.length],
+                  }))}
                   dataKey="count"
-                  nameKey="style"
-label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                >
-                  {stats.videoStyles.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
+                  nameKey="videoStyle"
+                  stroke="0"
+                />
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
+          <CardFooter className="flex-col gap-2 text-sm">
+            <div className="text-muted-foreground leading-none">
+              Showing Style Distribution of Videos
+            </div>
+          </CardFooter>
         </Card>
 
         {/* Top Referrers */}

@@ -1,6 +1,6 @@
+import { FormState } from '../types';
 import { cx } from 'class-variance-authority';
 import React, { useState } from 'react'
-import { FormState } from '../page';
 
 export const captionOptions = [{
     name: 'Youtuber',

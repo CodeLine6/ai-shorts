@@ -53,14 +53,14 @@ export default defineSchema({
       .index("by_transactionId", ["transactionId"]),
     videoData : defineTable({
         title: v.string(),
-        topic: v.string(),
-        script: v.string(),
+        topic: v.optional(v.string()),
+        script: v.optional(v.string()),
         videoStyle: v.string(),
         caption: v.any(),
-        voice: v.object({
+        voice: v.optional(v.object({
             voiceId: v.string(),
             name: v.string()
-        }),
+        })),
         images: v.optional(v.any()),
         audioUrl: v.optional(v.string()),
         captionJson: v.optional(v.any()),

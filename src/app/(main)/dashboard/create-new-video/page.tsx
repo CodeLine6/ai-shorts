@@ -1,6 +1,6 @@
 "use client"
 import { useReducer, useState } from "react";
-import Topic from "./_components/Topic"
+import Content from "./_components/Topic"
 import VideoStyle from "./_components/VideoStyle";
 import Voice from "./_components/Voice";
 import Captions from "./_components/Captions";
@@ -13,57 +13,15 @@ import { api } from "../../../../../convex/_generated/api";
 import { useSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import Title from "./_components/Title";
+import { FormAction, FormState, ValidationRule } from "./types";
+import { moveSupabaseFile } from "@/lib/utils";
 
-
-// TypeScript Interfaces
-interface ValidationRule {
-    type: 'required' | 'fieldType' | 'objectShape' | 'nested' | 'minLength' | 'maxLength' | 'email';
-    message: string;
-    value?: string | number | Record<string, string> | Record<string, ValidationRule[]>;
-}
-
-interface FormField<T = any> {
-    value: T;
-    error: string[];
-    rules: ValidationRule[];
-}
-
-interface VoiceConfig {
-    name: string;
-    voiceId: string;
-}
-
-interface CaptionConfig {
-    name: string;
-    style: string;
-}
-
-interface ScriptConfig {
-    content: string;
-    tts_text: string;
-}
-
-export interface FormState {
-    title: FormField<string>;
-    topic: FormField<string>;
-    script: FormField<ScriptConfig | undefined>;
-    videoStyle: FormField<string>;
-    voice: FormField<VoiceConfig | undefined>;
-    captionStyle: FormField<CaptionConfig | undefined>;
-}
-
-interface FormAction {
-    type: 'set' | 'submit' | 'reset';
-    payload?: {
-        fieldName: keyof FormState;
-        fieldValue: any;
-    };
-}
 
 // Enhanced validation functions
 function validateObjectShape(obj: Record<string, any>, shape: Record<string, string>): string[] {
     const errors: string[] = [];
-    
+
     for (const [key, expectedType] of Object.entries(shape)) {
         if (!(key in obj)) {
             errors.push(`Missing property: ${key}`);
@@ -73,75 +31,85 @@ function validateObjectShape(obj: Record<string, any>, shape: Record<string, str
             errors.push(`Property ${key} cannot be empty`);
         }
     }
-    
+
     return errors;
 }
 
 function validateNestedFields(value: Record<string, any>, fields: Record<string, ValidationRule[]>): string[] {
     const errors: string[] = [];
-    
+
     for (const [nestedField, nestedRules] of Object.entries(fields)) {
         const nestedValue = value[nestedField];
         const nestedErrors = validateField(nestedValue, nestedRules);
-        
+
         if (nestedErrors.length > 0) {
             errors.push(`${nestedField}: ${nestedErrors[0]}`);
         }
     }
-    
+
     return errors;
 }
 
-function validateField<T>(value: T, rules: ValidationRule[]): string[] {
+function validateField<T>(value: T, rules: ValidationRule[], formState?: FormState): string[] {
     const errors: string[] = [];
-    
-    for (const rule of rules) {
+
+    outerLoop: for (const rule of rules) {
         switch (rule.type) {
             case "required":
                 if (!value || (typeof value === 'string' && value.trim().length === 0)) {
                     errors.push(rule.message);
+                    break outerLoop;
                 }
                 break;
-                
+
+            case "conditionalRequired":
+                if (rule.condition && formState) {
+                    const shouldBeRequired = rule.condition(formState);
+                    if (shouldBeRequired && (!value || (typeof value === 'string' && value.trim().length === 0))) {
+                        errors.push(rule.message);
+                        break outerLoop;
+                    }
+                }
+                break;
+
             case "fieldType":
                 if (value !== undefined && value !== null) {
                     if (typeof rule.value !== 'string') break;
-                    
+
                     if (rule.value === "email" && typeof value === "string") {
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         if (!emailRegex.test(value)) {
                             errors.push(rule.message);
                         }
-                    } else if (typeof value !== rule.value) {
+                    }
+                    else if (rule.value == "object" && typeof value === "object") {
+                        if (rule.objectShape) {
+                            const shapeErrors = validateObjectShape(
+                                value as Record<string, any>,
+                                rule.objectShape as Record<string, string>
+                            );
+                            if (shapeErrors.length > 0) {
+                                errors.push(rule.message);
+                            }
+                        }
+                    }
+                    else if (rule.value == "nested" && typeof value === "object") {
+                        if (rule.objectShape) {
+                            const nestedErrors = validateNestedFields(
+                                value as Record<string, any>,
+                                rule.objectShape as Record<string, ValidationRule[]>
+                            );
+                            if (nestedErrors.length > 0) {
+                                errors.push(rule.message);
+                            }
+                        }
+                    }
+                    else if (typeof value !== rule.value) {
                         errors.push(rule.message);
                     }
                 }
                 break;
-                
-            case "objectShape":
-                if (value && typeof value === 'object' && rule.value) {
-                    const shapeErrors = validateObjectShape(
-                        value as Record<string, any>, 
-                        rule.value as Record<string, string>
-                    );
-                    if (shapeErrors.length > 0) {
-                        errors.push(rule.message);
-                    }
-                }
-                break;
-                
-            case "nested":
-                if (value && typeof value === 'object' && rule.value) {
-                    const nestedErrors = validateNestedFields(
-                        value as Record<string, any>,
-                        rule.value as Record<string, ValidationRule[]>
-                    );
-                    if (nestedErrors.length > 0) {
-                        errors.push(rule.message);
-                    }
-                }
-                break;
-                
+
             case "minLength":
                 if (value && typeof value === 'string' && typeof rule.value === 'number') {
                     if (value.length < rule.value) {
@@ -149,7 +117,7 @@ function validateField<T>(value: T, rules: ValidationRule[]): string[] {
                     }
                 }
                 break;
-                
+
             case "maxLength":
                 if (value && typeof value === 'string' && typeof rule.value === 'number') {
                     if (value.length > rule.value) {
@@ -157,7 +125,7 @@ function validateField<T>(value: T, rules: ValidationRule[]): string[] {
                     }
                 }
                 break;
-                
+
             case "email":
                 if (value && typeof value === 'string') {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -168,12 +136,12 @@ function validateField<T>(value: T, rules: ValidationRule[]): string[] {
                 break;
         }
     }
-    
+
     return errors;
 }
 
 // Initial state with proper typing
-const initialState: FormState = {
+const formFields: FormState = {
     title: {
         value: "",
         error: [],
@@ -190,23 +158,19 @@ const initialState: FormState = {
             {
                 type: "minLength",
                 message: "Title must be at least 3 characters",
-                value: 3,                
+                value: 3,
             },
             {
                 type: "maxLength",
                 message: "Title must be at most 50 characters",
-                value: 50,                
+                value: 50,
             }
         ]
     },
     topic: {
-        value: "",
+        value: undefined,
         error: [],
         rules: [
-            {
-                type: "required",
-                message: "Please select a topic"
-            },
             {
                 type: "fieldType",
                 message: "Topic must be a string",
@@ -219,13 +183,43 @@ const initialState: FormState = {
         error: [],
         rules: [
             {
-                type: "required",
-                message: "Please select a script"
+                type: "conditionalRequired",
+                message: "Script is required when no audio URL is provided",
+                condition: (formState) => !formState.audioUrl.value || formState.audioUrl.value.trim() === ""
             },
             {
-                type: "objectShape",
+                type: "fieldType",
                 message: "Script must have content property",
-                value: { content: "string", tts_text: "string" }
+                value: "object",
+                objectShape: { content: "string", tts_text: "string" }
+            }
+        ]
+    },
+    voice: {
+        value: undefined,
+        error: [],
+        rules: [
+            {
+                type: "conditionalRequired",
+                message: "Voice is required when no audio URL is provided",
+                condition: (formState) => !formState.audioUrl.value || formState.audioUrl.value.trim() === ""
+            },
+            {
+                type: "fieldType",
+                message: "Voice must have title and voiceId",
+                value: "object",
+                objectShape: { name: "string", voiceId: "string" }
+            }
+        ]
+    },
+    audioUrl: {
+        value: undefined,
+        error: [],
+        rules: [
+            {
+                type: "fieldType",
+                message: "Audio URL must be a string",
+                value: "string"
             }
         ]
     },
@@ -244,21 +238,6 @@ const initialState: FormState = {
             }
         ]
     },
-    voice: {
-        value: undefined,
-        error: [],
-        rules: [
-            {
-                type: "required",
-                message: "Please select a voice"
-            },
-            {
-                type: "objectShape",
-                message: "Voice must have title and voiceId",
-                value: { name: "string", voiceId: "string" }
-            }
-        ]
-    },
     captionStyle: {
         value: undefined,
         error: [],
@@ -268,9 +247,10 @@ const initialState: FormState = {
                 message: "Please select a caption style"
             },
             {
-                type: "objectShape",
+                type: "fieldType",
                 message: "Caption style must have title and styleId",
-                value: {name: "string", style: "string"}
+                value: "object",
+                objectShape: { name: "string", style: "string" }
             }
         ]
     }
@@ -281,35 +261,34 @@ const reducer = (state: FormState, action: FormAction): FormState => {
     let newState: FormState;
     switch (action.type) {
         case "reset":
-            return initialState;
-            
+            return formFields; // Use formFields instead of initialState
+
         case "set":
             if (!action.payload) return state;
-            
+
             const { fieldName, fieldValue } = action.payload;
             newState = { ...state };
             const field = newState[fieldName];
-            
-            return {
-                ...newState,
-                [fieldName]: {
-                    ...field,
-                    value: fieldValue,
-                    error: validateField(fieldValue, field.rules)
-                }
+
+            // Update the field
+            const updatedField = {
+                ...field,
+                value: fieldValue,
+                error: validateField(fieldValue, field.rules, { ...newState, [fieldName]: { ...field, value: fieldValue } })
             };
-            
-        case "submit":
+
+            newState[fieldName] = updatedField;
+
+            return newState;
+
+        case "validate":
             newState = { ...state };
             (Object.keys(newState) as Array<keyof FormState>).forEach(key => {
                 const field = newState[key];
-                newState[key] = {
-                    ...field,
-                    error: validateField(field.value, field.rules)
-                };
+                field.error = validateField(field.value, field.rules, newState);
             });
             return newState;
-            
+
         default:
             return state;
     }
@@ -323,7 +302,7 @@ interface FieldErrors {
 }
 
 function Page() {
-    const [formData, dispatch] = useReducer(reducer, initialState);
+    const [formData, dispatch] = useReducer(reducer, formFields);
     const [loading, setLoading] = useState<boolean>(false);
     const CreateInitialVideoRecord = useMutation(api.videoData.CreateVideoData);
     const { data: session } = useSession();
@@ -334,7 +313,7 @@ function Page() {
         dispatch({
             type: "set",
             payload: {
-                fieldName, 
+                fieldName,
                 fieldValue
             }
         });
@@ -344,27 +323,18 @@ function Page() {
         const validatedData = { ...formData };
         (Object.keys(validatedData) as Array<keyof FormState>).forEach(key => {
             const field = validatedData[key];
-            field.error = validateField(field.value, field.rules);
+            field.error = validateField(field.value, field.rules, validatedData);
         });
-        
+
         return Object.values(validatedData).some(field => field.error.length > 0);
     }
 
     const handleSubmit = (): void => {
-        // Validate all fields synchronously
-        const validatedData = { ...formData };
-        (Object.keys(validatedData) as Array<keyof FormState>).forEach(key => {
-            const field = validatedData[key];
-            field.error = validateField(field.value, field.rules);
-        });
-        
-        // Check for errors in the validated data
-        const hasErrors = Object.values(validatedData).some(field => field.error.length > 0);
-        
+
         // Update state with validation results
-        dispatch({ type: "submit" });
-        
-        if (!hasErrors) {
+        dispatch({ type: "validate" });
+
+        if (!(hasFormErrors())) {
             GenerateVideo();
         } else {
             toast({
@@ -392,7 +362,6 @@ function Page() {
             const resp = await CreateInitialVideoRecord({
                 title: formData.title.value,
                 topic: formData.topic.value,
-                script: formData.script.value,
                 videoStyle: formData.videoStyle.value,
                 caption: formData.captionStyle.value,
                 voice: formData.voice.value,
@@ -401,9 +370,17 @@ function Page() {
                 createdBy: user?.email || "Unknown",
                 credits: user?.credits || 0
             });
-            
+
+            const newAudioUrl = await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp);
+
             const result = await axios.post('/api/generate-video-data', {
-                ...Object.fromEntries(Object.entries(formData).map(([key, value]) => [key, value.value])),
+                ...Object.fromEntries(
+                    Object.entries(
+                        { ...formData , 
+                            audioUrl: {...formData.audioUrl,value:newAudioUrl}
+                        }
+                    ).map(([key, value]) => [key, value.value])
+                ),
                 recordId: resp,
             });
 
@@ -423,7 +400,7 @@ function Page() {
 
             // Redirect to video page
             router.push(`/dashboard`);
-            
+
             console.log(result);
         } catch (error) {
             console.error('Error generating video:', error);
@@ -436,42 +413,42 @@ function Page() {
             setLoading(false);
         }
     }
-  
+
     return (
         <div>
             <h2 className="text-3xl">Create New Video</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 mt-8 gap-7">
                 <div className="col-span-2 p-7 border rounded-xl h-[70vh] overflow-auto">
-                    {/* Topic & Script */}
-                    <Topic 
-                        onHandleInputChange={onHandleInputChange} 
+
+                    <Title
+                        onHandleInputChange={onHandleInputChange}
+                        errors={formData.title.error}
+                    />
+                    <Content
+                        onHandleInputChange={onHandleInputChange}
                         errors={{
-                            title: formData.title.error,
-                            topic: formData.topic.error, 
+                            topic: formData.topic.error,
                             script: formData.script.error
-                        }} 
+                        }}
                     />
-                    {/* Video Image Style */}
-                    <VideoStyle 
-                        onHandleInputChange={onHandleInputChange} 
-                        errors={formData.videoStyle.error}
-                    />
-                    {/* Voice */}
-                    <Voice 
-                        onHandleInputChange={onHandleInputChange} 
+                    <Voice
+                        onHandleInputChange={onHandleInputChange}
                         errors={formData.voice.error}
                     />
-                    {/* Captions */}
-                    <Captions 
-                        onHandleInputChange={onHandleInputChange} 
+                    <VideoStyle
+                        onHandleInputChange={onHandleInputChange}
+                        errors={formData.videoStyle.error}
+                    />
+                    <Captions
+                        onHandleInputChange={onHandleInputChange}
                         errors={formData.captionStyle.error}
                     />
-                    <Button 
-                        disabled={loading} 
-                        className="w-full mt-5" 
+                    <Button
+                        disabled={loading}
+                        className="w-full mt-5"
                         onClick={handleSubmit}
                     >
-                        {loading ? <Loader2Icon className="animate-spin"/> : <WandSparkles/>} 
+                        {loading ? <Loader2Icon className="animate-spin" /> : <WandSparkles />}
                         Generate Video
                     </Button>
                 </div>
@@ -479,7 +456,7 @@ function Page() {
                     <Preview formData={{
                         videoStyle: formData.videoStyle.value,
                         captionStyle: formData.captionStyle.value
-                    }}/>
+                    }} />
                 </div>
             </div>
         </div>

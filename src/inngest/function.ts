@@ -1,7 +1,7 @@
 import { pollForResult } from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
-import { supabase } from "@/lib/supabase"; // Import Supabase client
+import supabase from "@/lib/supabase"; // Import Supabase client
 import { gemini, config, model, a44Client } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
@@ -47,13 +47,20 @@ export const GenerateVideoData = inngest.createFunction(
   { id: "generate-video-data" },
   { event: "generate-video-data" },
   async ({ event, step }) => {
-    const { title, script, videoStyle, voice, recordId } = event.data;
+    const { title, script, videoStyle, voice, recordId, audioUrl } = event.data;
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
     // Generate Audio File MP3
     const GenerateAudioFile = await step.run("GenerateAudioFile", async () => {
+      
+      if(audioUrl) {
+        return {
+          fileName: audioUrl.split("/").pop(),
+          filePath: audioUrl,
+        }
+      }
+      
       const VOICE_ID = voice.voiceId;
-
       try {
         console.log("Making ElevenLabs API request...");
 
@@ -92,11 +99,11 @@ export const GenerateVideoData = inngest.createFunction(
         const audioPathInStorage = `${recordId}/audio/${fileName}`;
 
         // Upload audio to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError  } = await supabase.storage
           .from("media") // Assuming you have a bucket named 'media'
           .upload(audioPathInStorage, audioBufferNode, {
             contentType: "audio/mpeg",
-            upsert: false, // Set to true if you want to overwrite existing files
+            upsert: true, // Set to true if you want to overwrite existing files
           });
 
         if (uploadError) {
@@ -113,7 +120,6 @@ export const GenerateVideoData = inngest.createFunction(
         return {
           fileName,
           filePath: publicUrlData.publicUrl, // Store the public URL
-          audioBuffer: audioBufferNode,
         };
       } catch (error) {
         console.log("Error generating audio file:", error);
@@ -238,7 +244,7 @@ export const GenerateVideoData = inngest.createFunction(
           }
         )
       );
-      
+      console.log(images_buffer)
       return images_buffer;
     });
     
@@ -293,7 +299,7 @@ export const GenerateVideoData = inngest.createFunction(
             );
 
           const start = index === 0 ? 0 : parseFloat((relatedTranscript[0]?.start).toFixed(3));
-          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end + 1).toFixed(3));
+          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end).toFixed(3));
 
           const duration = parseFloat((end - start).toFixed(3));
           console.log(`Duration `, duration, " Start: ", start, " End: ", end);
@@ -319,6 +325,7 @@ export const GenerateVideoData = inngest.createFunction(
           utterances: GenerateCaptions.result.transcription.utterances,
         },
         images: ImageObject,
+        script: GenerateCaptions.result.transcription.full_transcript,
       });
     });
 

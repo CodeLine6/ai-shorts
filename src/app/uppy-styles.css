@@ -1,0 +1,114 @@
+/* uppy-styles.css */
+.uppy\:reset {
+  margin: 0;
+  padding: 0;
+}
+
+.uppy\:my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.uppy\:grid {
+  display: grid;
+}
+
+.uppy\:gap-4 {
+  gap: 1rem;
+}
+
+.uppy\:grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.uppy\:grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.uppy\:flex {
+  display: flex;
+}
+
+.uppy\:flex-col {
+  flex-direction: column;
+}
+
+.uppy\:items-center {
+  align-items: center;
+}
+
+.uppy\:gap-2 {
+  gap: 0.5rem;
+}
+
+.uppy\:relative {
+  position: relative;
+}
+
+.uppy\:overflow-hidden {
+  overflow: hidden;
+}
+
+.uppy\:bg-gray-100 {
+  background-color: rgb(243 244 246);
+}
+
+.uppy\:rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.uppy\:justify-center {
+  justify-content: center;
+}
+
+.uppy\:w-full {
+  width: 100%;
+}
+
+.uppy\:h-full {
+  height: 100%;
+}
+
+.uppy\:object-cover {
+  object-fit: cover;
+}
+
+.uppy\:font-medium {
+  font-weight: 500;
+}
+
+.uppy\:truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uppy\:text-gray-500 {
+  color: rgb(107 114 128);
+}
+
+.uppy\:tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.uppy\:rounded {
+  border-radius: 0.25rem;
+}
+
+.uppy\:text-blue-500 {
+  color: rgb(59 130 246);
+}
+
+.uppy\:hover\:text-blue-700:hover {
+  color: rgb(29 78 216);
+}
+
+.uppy\:bg-transparent {
+  background-color: transparent;
+}
+
+.uppy\:transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

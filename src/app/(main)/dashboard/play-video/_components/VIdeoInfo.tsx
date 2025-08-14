@@ -17,7 +17,7 @@ const VIdeoInfo = ({videoData} : {videoData: any}) => {
         <p className='text-gray-500'>Script : {videoData?.script}</p>
         <h2>Video Style : {videoData?.videoStyle}</h2>
         <Link href={videoData?.downloadUrl || ''} className='w-full' download={videoData?.title} >
-        <Button><DownloadIcon /> Export & Download</Button>
+        <Button className='w-full'><DownloadIcon /> Export & Download</Button>
         </Link>
       </div>
     </div>
