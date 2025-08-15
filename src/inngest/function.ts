@@ -350,6 +350,8 @@ export const GenerateVideoData = inngest.createFunction(
         compatibleOnly: true,
       });
 
+      console.log("Services: ", services);
+
       const serviceName = services[0].serviceName;
 
       let renderResult;
@@ -433,6 +435,7 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
           captionJson: video.captionJson,
           images: video.images,
           status: "failed",
+          script: video.script,
         });
       });
       return { message: "Render failed, database updated" };
@@ -454,6 +457,7 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
           captionJson: video.captionJson,
           images: video.images,
           status: "completed",
+          script: video.script,
         });
       });
       return { message: "Render completed, database updated" };
