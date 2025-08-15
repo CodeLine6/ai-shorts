@@ -370,8 +370,8 @@ function Page() {
                 createdBy: user?.email || "Unknown",
                 credits: user?.credits || 0
             });
-
-            const newAudioUrl = await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp);
+            
+            const newAudioUrl = formData.audioUrl.value ? await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp) : '';
 
             const result = await axios.post('/api/generate-video-data', {
                 ...Object.fromEntries(
