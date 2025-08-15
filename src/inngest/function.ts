@@ -1,4 +1,4 @@
-import { pollForResult } from "@/lib/utils";
+import { pollForResult, prefetchImages } from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
 import supabase from "@/lib/supabase"; // Import Supabase client
@@ -355,6 +355,7 @@ export const GenerateVideoData = inngest.createFunction(
       const serviceName = services[0].serviceName;
 
       let renderResult;
+      const prefetchedImages = await prefetchImages(video.images);
       try {
         const renderVideo = renderMediaOnCloudrun({
           serviceName,
@@ -366,7 +367,7 @@ export const GenerateVideoData = inngest.createFunction(
               // @ts-ignore
               audioUrl: video.audioUrl, // Use Supabase URL
               captionJson: video.captionJson,
-              images: video.images,
+              images: prefetchedImages,
               caption: video.caption,
             },
           },

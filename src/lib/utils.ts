@@ -78,3 +78,18 @@ export async function moveSupabaseFile(title,audioUrl, videoId) {
           return publicUrlData.publicUrl
   
 }
+
+export const prefetchImages = async (imageArray: any[]) => {
+  const fetchedImages = [];
+
+  for (const image of imageArray) {
+    const response = await fetch(image.image);
+    const blob = await response.blob();
+    fetchedImages.push({
+      ...image,
+      image: URL.createObjectURL(blob),
+    });
+  }
+
+  return fetchedImages;
+}

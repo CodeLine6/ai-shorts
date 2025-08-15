@@ -5,6 +5,7 @@ import VIdeoInfo from '../_components/VIdeoInfo'
 import { useConvex } from 'convex/react';
 import { api } from '../../../../../../convex/_generated/api';
 import { useParams } from 'next/navigation';
+import { prefetchImages } from '@/lib/utils';
 
 const PlayVideo = () => {
 
@@ -22,7 +23,12 @@ const PlayVideo = () => {
       recordId: videoId,
     })
 
-    setVideoData(videoData)
+    const prefetchedImages = await prefetchImages(videoData.images);
+
+    setVideoData({
+      ...videoData,
+      images: prefetchedImages,
+    });
   }
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
