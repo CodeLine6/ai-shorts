@@ -17,10 +17,7 @@ const utterances = captions.utterances
       inputProps={{
         videoData,
       }}
-      style={{
-        width:'25vw',
-        height:'70vh'
-      }}
+      className="!w-full aspect-[1/2] !h-auto md:mx-auto md:!w-[53%]" 
     />
   )
 }

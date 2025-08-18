@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalculateMetadataFunction, Composition } from 'remotion';
+import { Composition } from 'remotion';
 import RemotionComposition from './../src/app/_components/RemotionComposition';
 import './styles.css';
 import * as z from 'zod';

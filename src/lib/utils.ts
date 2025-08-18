@@ -35,7 +35,7 @@ export function debounce<T extends (...args: any[]) => void>(func: T, delay: num
   };
 }
 
-export async function moveSupabaseFile(title,audioUrl, videoId) {
+export async function moveSupabaseFile(title: string, audioUrl: string, videoId: string) {
   const audioPathInStorage = `${videoId}/audio/${title}.mp3`;
   
           // Fetch the audio content from the temporary URL
@@ -86,11 +86,9 @@ export const prefetchImages = async (imageArray: any[]) => {
     const response = await fetch(image.image);
     const blob = await response.blob();
 
-    let dataUrl = await new Promise(resolve => {
-    let reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.readAsDataURL(blob);
-    });
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const dataUrl = `data:${blob.type};base64,${buffer.toString('base64')}`;
     fetchedImages.push({
       ...image,
       image: dataUrl,

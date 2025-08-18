@@ -32,10 +32,8 @@ const PlayVideo = () => {
   }
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
-        <div>
-            {videoData && videoData.captionJson  && <RemotionPlayer videoData={videoData} />}
-        </div>
-        <div>
+        {videoData && videoData.captionJson  && <RemotionPlayer videoData={videoData} />}
+        <div className='p-5 border rounded-xl'>
             <VIdeoInfo videoData={videoData} />
         </div>
     </div>

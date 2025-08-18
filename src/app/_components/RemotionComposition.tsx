@@ -90,12 +90,6 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
               return null;
             }
             const wordStartFrame = Math.floor(wordObj.start * fps);
-            const wordEndFrame = Math.floor(wordObj.end * fps);
-
-            const opacity = interpolate(frame, [wordStartFrame, wordStartFrame + 10], [0.5, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
-            });
 
             const scale = spring({
               frame: frame - wordStartFrame,

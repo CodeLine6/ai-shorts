@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import { toast } from '@/hooks/use-toast'
-import { Gem, HomeIcon, LucideFile, Search, WalletCards, Users } from 'lucide-react'
+import { Gem, HomeIcon, Film , Search, WalletCards, Users } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ import { usePathname } from 'next/navigation'
 const MenuItems = [
     {
         label: 'Collection',
-        icon: HomeIcon,
+        icon: Film ,
         link: '/dashboard'
     },
     {
