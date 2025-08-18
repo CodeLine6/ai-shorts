@@ -85,9 +85,15 @@ export const prefetchImages = async (imageArray: any[]) => {
   for (const image of imageArray) {
     const response = await fetch(image.image);
     const blob = await response.blob();
+
+    let dataUrl = await new Promise(resolve => {
+    let reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+    });
     fetchedImages.push({
       ...image,
-      image: URL.createObjectURL(blob),
+      image: dataUrl,
     });
   }
 

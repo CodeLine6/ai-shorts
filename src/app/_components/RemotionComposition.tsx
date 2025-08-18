@@ -2,14 +2,12 @@
 import React, { useEffect } from 'react'
 import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring } from 'remotion'
 import {
-  linearTiming,
   springTiming,
   TransitionSeries,
 } from "@remotion/transitions";
 import { sentence, utterance, word } from '../../../convex/schema'
 
 import { fade } from "@remotion/transitions/fade";
-import { wipe } from "@remotion/transitions/wipe";
 
 const RemotionComposition = ({ videoData }: { videoData: any }) => {
   videoData
@@ -52,12 +50,28 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
               <>
                 <TransitionSeries.Sequence key={index} durationInFrames={duration + 40}>
                   <AbsoluteFill>
-                    <img src={image.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={image.image}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transform: `scale(${interpolate(
+                          frame,
+                          [image.start * fps, (image.start + image.duration / 2) * fps, (image.start + image.duration) * fps],
+                          [1, 1.2, 1],
+                          {
+                            extrapolateLeft: 'clamp',
+                            extrapolateRight: 'clamp',
+                          }
+                        )})`,
+                      }}
+                    />
                   </AbsoluteFill>
                 </TransitionSeries.Sequence>
                 {index !== imageList.length - 1 && <TransitionSeries.Transition
                   timing={springTiming({durationInFrames: 20})}
-                  presentation={(index % 2 === 0) ? fade() : wipe()}
+                  presentation={fade()}
                 />}
               </>
             )

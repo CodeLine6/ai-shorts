@@ -356,6 +356,7 @@ export const GenerateVideoData = inngest.createFunction(
 
       let renderResult;
       const prefetchedImages = await prefetchImages(video.images);
+      console.log("Prefetched images: ", prefetchedImages);
       try {
         const renderVideo = renderMediaOnCloudrun({
           serviceName,

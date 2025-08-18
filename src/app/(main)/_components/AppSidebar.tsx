@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import { toast } from '@/hooks/use-toast'
 import { Gem, HomeIcon, LucideFile, Search, WalletCards, Users } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -10,14 +11,9 @@ import { usePathname } from 'next/navigation'
 
 const MenuItems = [
     {
-        label: 'Home',
+        label: 'Collection',
         icon: HomeIcon,
         link: '/dashboard'
-    },
-    {
-        label: 'New Video',
-        icon: LucideFile,
-        link: '/dashboard/create-new-video'
     },
     {
         label: 'Explore',
@@ -57,7 +53,13 @@ function AppSidebar() {
         <SidebarGroup />
             <SidebarGroupContent>
                 <div className='mx-5 mt-8'>
-                    <Link href={'/dashboard/create-new-video'}>
+                    <Link href={user?.credits ? `/dashboard/create-new-video` : ``} onClick={user?.credits ? () => {} : () => {
+                        toast({
+                            title: 'Error',
+                            description: 'You need to buy more credits to create a video',
+                            variant: 'destructive'                            
+                        })
+                    }} >
                     <Button className='w-full'>+ Create New Video</Button>
                     </Link>
                 </div>
@@ -81,7 +83,7 @@ function AppSidebar() {
                 <Gem className='text-gray-400'/>
                 <h2 className='text-gray-400'>{user && user.credits} {user && user.credits === 1 ? "Credit" : "Credits"}</h2>
             </div>
-            <Button className='w-full mt-3'>Buy More Credits</Button>
+            <Link href={'/dashboard/billing'}><Button className='w-full mt-3'>Buy More Credits</Button></Link>
          </div>
       </SidebarFooter>
     </Sidebar>
