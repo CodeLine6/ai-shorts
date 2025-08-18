@@ -1638,7 +1638,7 @@ export const RemotionRoot: React.FC = () => {
         durationInFrames={300}
         fps={30}
         width={720}
-        height={1080}
+        height={1280}
         defaultProps={{
           videoData: videoData
         }}
