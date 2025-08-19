@@ -1624,7 +1624,7 @@ const calculateMetadata = ({props} : {props: {videoData: z.infer<typeof videoDat
   const {utterances} = videoData.captionJson
   return {
     // Change the metadata
-    durationInFrames: ((parseInt(utterances[utterances.length - 1].end.toFixed(0))+1) * 30),
+    durationInFrames: ((utterances[utterances.length - 1].end+2) * 30),
     // or transform some props
   };
 };
@@ -1635,7 +1635,6 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
-        durationInFrames={300}
         fps={30}
         width={720}
         height={1280}
