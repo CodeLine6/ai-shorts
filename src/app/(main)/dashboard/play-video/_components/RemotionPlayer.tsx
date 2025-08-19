@@ -9,7 +9,7 @@ const utterances = captions.utterances
   return (
     <Player
       component={RemotionComposition}
-      durationInFrames={parseInt(utterances[utterances.length - 1].end.toFixed(0)) * 30}
+      durationInFrames={(parseInt(utterances[utterances.length - 1].end.toFixed(0)) + 1) * 30}
       fps={30}
       compositionWidth={720}
       compositionHeight={1280}

@@ -12,7 +12,7 @@ import { fade } from "@remotion/transitions/fade";
 const RemotionComposition = ({ videoData }: { videoData: any }) => {
   videoData
   const captions: { sentences: sentence[], utterances: utterance[] } = videoData?.captionJson
-  const sentences = captions.sentences;
+  const sentences = captions.utterances;
   const { fps } = useVideoConfig()
   const imageList = videoData?.images
   const frame = useCurrentFrame();
@@ -22,14 +22,14 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
     videoData && getDurationFrame()
   }, [videoData])
   const getDurationFrame = () => {
-    const totalDuration = (sentences[sentences.length - 1].end) * fps
+    const totalDuration = (sentences[sentences.length - 1].end + 1) * fps
     //setDurationInFrames(Number(totalDuration.toFixed(0)) + 100)
     return totalDuration
   }
 
   const getCurrentCaption = () => {
     const singleCaption: word[] = []
-    sentences?.forEach((caption: sentence) => {
+    sentences?.forEach((caption: utterance) => {
       singleCaption.push(...caption.words)
     })
     const currentTime = frame / fps;

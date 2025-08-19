@@ -15,11 +15,11 @@ const MenuItems = [
         icon: Film ,
         link: '/dashboard'
     },
-    {
+    /* {
         label: 'Explore',
         icon: Search,
         link: '#'
-    },
+    }, */
     {
         label: 'Billing',
         icon: WalletCards,

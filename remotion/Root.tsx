@@ -1624,7 +1624,7 @@ const calculateMetadata = ({props} : {props: {videoData: z.infer<typeof videoDat
   const {utterances} = videoData.captionJson
   return {
     // Change the metadata
-    durationInFrames: ((utterances[utterances.length - 1].end+2) * 30),
+    durationInFrames: ((parseInt(utterances[utterances.length - 1].end.toFixed(0))+1) * 30),
     // or transform some props
   };
 };
