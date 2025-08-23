@@ -205,16 +205,31 @@ export const CheckUsernameAvailability = mutation({
     }
 })
 
-export const UpdateUserCredits = mutation({
+export const AdjustUserCredits = mutation({
     args: {
         userId: v.id('users'),
-        newCredits: v.number()
+        amount: v.number()
     },
-    handler: async({db}, args) => {
-        const result =await db.patch(args.userId, {
-            credits: args.newCredits 
+    handler: async(ctx, args) => {
+        // Get current user
+        const user = await ctx.db.get(args.userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        
+        const newCredits = user.credits + args.amount;
+        
+        // Optional: Prevent negative credits
+        if (newCredits < 0) {
+            throw new Error("Insufficient credits");
+        }
+        
+        // This runs in a transaction automatically in Convex
+        await ctx.db.patch(args.userId, {
+            credits: newCredits
         });
-        return result;
+        
+        return { newCredits };
     }
 });
 

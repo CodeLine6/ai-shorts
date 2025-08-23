@@ -368,7 +368,6 @@ function Page() {
                 //@ts-ignore
                 uid: user._id,
                 createdBy: user?.email || "Unknown",
-                credits: user?.credits || 0
             });
             
             const newAudioUrl = formData.audioUrl.value ? await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp) : '';

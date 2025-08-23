@@ -1,4 +1,4 @@
-import { a44Client } from '@/config/AiModal';
+import { a4fClient } from '@/config/AiModal';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 // Ensure route is always dynamic and never cached
@@ -37,12 +37,13 @@ export async function GET(req, res) {
     // get prompt from search parameter
     const prompt = req.nextUrl.searchParams.get('prompt');
 
-    const fluxReq = await a44Client.images.generate({
-                      model: "provider-6/FLUX.1-kontext-max",
+    const fluxReq = await a4fClient.images.generate({
+                      model: "provider-3/FLUX.1-schnell",
                       prompt: prompt,
                       response_format: "b64_json",
                       output_compression: 50,
-                      size: "1024x1536",
+                      size: "1080x1920"
+                      
                 });
     
                 const  base64 = fluxReq.data?.[0]?.b64_json;

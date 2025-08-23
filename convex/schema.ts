@@ -67,11 +67,15 @@ export default defineSchema({
         uid: v.id('users'),
         createdBy: v.string(),
         status: v.optional(v.string()),
+        renderProgress: v.optional(v.number()),
+        comments: v.optional(v.any()),
         downloadUrl: v.optional(v.string()),
     }),
+    
 })
 
 export interface VideoData {
+    _id: string;
     title: string;
     topic: string;
     script: string;
@@ -87,6 +91,10 @@ export interface VideoData {
     uid: string;
     createdBy: string;
     status: string;
+    renderProgress: number;
+    comments: any;
+    downloadUrl: string;
+    _creationTime: number;
 }
 
 export interface captionJson {

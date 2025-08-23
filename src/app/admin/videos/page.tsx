@@ -40,8 +40,9 @@ export default function AdminVideosPage() {
   };
   // Calculate statistics
   const totalVideos = videos.length;
-  const completedVideos = videos.filter(video => video.status === 'completed').length;
-  const pendingVideos = videos.filter(video => video.status === 'pending').length;
+  const completedVideos = videos.filter(video => video.status === 'Completed').length;
+  const inProgressVideos = videos.filter(video => video.status !== 'Completed' && video.status !== 'Failed').length;
+  const failedVideos = videos.filter(video => video.status === 'Failed').length;
   const videoStyles = Array.from(new Set(videos.map(video => video.videoStyle)));
   return (
     <div className="space-y-6">
@@ -71,11 +72,20 @@ export default function AdminVideosPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Videos</CardTitle>
+            <CardTitle className="text-sm font-medium">In Progress Videos</CardTitle>
+            <Play className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inProgressVideos}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Failed Videos</CardTitle>
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingVideos}</div>
+            <div className="text-2xl font-bold">{failedVideos}</div>
           </CardContent>
         </Card>
         <Card>
@@ -121,17 +131,27 @@ export default function AdminVideosPage() {
                     <Badge variant="secondary">{video.videoStyle}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={video.status === 'completed' ? "default" : "destructive"}>
+                    <Badge
+                      variant={
+                        video.status === 'Completed'
+                          ? 'default'
+                          : video.status === 'Failed'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
                       {video.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {video.status === 'completed' && video.downloadUrl ? (
+                    {video.status === 'Completed' && video.downloadUrl ? (
                       <a href={video.downloadUrl} target="_blank" rel="noopener noreferrer">
                         <Play className="h-4 w-4 text-green-500 cursor-pointer" />
                       </a>
+                    ) : video.status === 'Failed' ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-gray-400" />
+                      <Play className="h-4 w-4 text-gray-400" />
                     )}
                   </TableCell>
                 </TableRow>

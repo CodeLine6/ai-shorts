@@ -9,7 +9,7 @@ import { FormState } from "../types";
 
 const debouncedHandleScriptEdit = debounce((callback: () => void) => {
   callback()
-}, 2000);
+}, 800);
 
 function ScriptTabContent({ scriptErrors, editedScriptContent, onHandleInputChange }: { scriptErrors: string[], editedScriptContent: {editedScriptContent: string, setEditedScriptContent: (content: string) => void}, onHandleInputChange: (fieldValue: { content: string, tts_text: string } | string) => void }) {
   return (

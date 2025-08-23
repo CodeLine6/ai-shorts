@@ -2,11 +2,12 @@ import { pollForResult, prefetchImages } from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
 import supabase from "@/lib/supabase"; // Import Supabase client
-import { gemini, config, model, a44Client } from "@/config/AiModal";
+import { gemini, config, model, a4fClient } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
-import { sentence,utterance } from "../../convex/schema";
+import { sentence, utterance } from "../../convex/schema";
 import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
+import { FailureEventArgs } from "inngest";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
@@ -34,36 +35,44 @@ const ImagePrompt = `Generate Image prompt of style {style} with all details for
  give those characters a consistent character descriptions so that consistent face and bodily features are generated for a given character across all the  images 
  and finally add it to the appropriate image prompt.`;
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
-  async ({ event, step }) => {
-    await step.sleep("wait-a-moment", "1s");
-    return { message: `Hello ${event.data.email}!` };
-  }
-);
-
 export const GenerateVideoData = inngest.createFunction(
-  { id: "generate-video-data" },
+  {
+    id: "generate-video-data",
+    concurrency: {
+      limit: 2, // Ensures only one instance of this function runs at a time
+    },
+    onFailure: async ({ event, error }: FailureEventArgs) => {
+      const { recordId } = event.data.event.data;
+      const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Failed",
+        comments: `Inngest function failed: ${error.message}`
+      });
+    },
+  },
   { event: "generate-video-data" },
+
   async ({ event, step }) => {
     const { title, script, videoStyle, voice, recordId, audioUrl } = event.data;
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
     // Generate Audio File MP3
     const GenerateAudioFile = await step.run("GenerateAudioFile", async () => {
-      
-      if(audioUrl) {
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Generating Audio File"
+      });
+
+      if (audioUrl) {
         return {
           fileName: audioUrl.split("/").pop(),
           filePath: audioUrl,
         }
       }
-      
-      const VOICE_ID = voice.voiceId;
-      try {
-        console.log("Making ElevenLabs API request...");
 
+      const VOICE_ID = voice.voiceId;
+      
         const response = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
           {
@@ -87,6 +96,7 @@ export const GenerateVideoData = inngest.createFunction(
         if (!response.ok) {
           const errorText = await response.text();
           console.log("ElevenLabs API error:", errorText);
+      
           throw new Error(
             `ElevenLabs API error: ${response.status} - ${errorText}`
           );
@@ -99,7 +109,7 @@ export const GenerateVideoData = inngest.createFunction(
         const audioPathInStorage = `${recordId}/audio/${fileName}`;
 
         // Upload audio to Supabase Storage
-        const { data: uploadData, error: uploadError  } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("media") // Assuming you have a bucket named 'media'
           .upload(audioPathInStorage, audioBufferNode, {
             contentType: "audio/mpeg",
@@ -108,6 +118,7 @@ export const GenerateVideoData = inngest.createFunction(
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
+        
           throw new Error(`Supabase upload error: ${uploadError.message}`);
         }
 
@@ -115,32 +126,28 @@ export const GenerateVideoData = inngest.createFunction(
           .from("media")
           .getPublicUrl(audioPathInStorage);
 
-        console.log(`Audio file uploaded to: ${publicUrlData.publicUrl}`);
-
         return {
           fileName,
           filePath: publicUrlData.publicUrl, // Store the public URL
         };
-      } catch (error) {
-        console.log("Error generating audio file:", error);
-        throw error;
-      }
+      
     });
-
-    /* const GenerateAudioFile = {
-      fileName: "PJ-1753112766673.mp3",
-      filePath: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j975p2372h9g22vsefb5a768457m7jsy/audio/PJ2-1753182964386.mp3",
-    } */
 
     // Generate Captions
     const GenerateCaptions = await step.run("GenerateCaptions", async () => {
+
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Generating Captions"
+      });
+
       const gladiaV2BaseUrl = "https://api.gladia.io/v2/";
       const headers: Record<string, string> = {
         //@ts-ignore
         "x-gladia-key": process.env.GLADIA_API_KEY,
         "Content-Type": "application/json",
       };
-      try {
+      
         // Fetch the audio file from the public URL
 
         const requestData = {
@@ -150,8 +157,6 @@ export const GenerateVideoData = inngest.createFunction(
 
         headers["Content-Type"] = "application/json";
 
-        console.log("- Sending post transcription request to Gladia API...");
-
         const postTranscriptionResponse = (
           await axios.post(gladiaV2BaseUrl + "transcription/", requestData, {
             headers,
@@ -159,6 +164,7 @@ export const GenerateVideoData = inngest.createFunction(
         ).data;
 
         if (!postTranscriptionResponse.result_url) {
+          
           throw new Error(
             `Gladia API returned invalid result_url: ${postTranscriptionResponse.result_url}`
           );
@@ -169,85 +175,128 @@ export const GenerateVideoData = inngest.createFunction(
         );
 
         return subtitles;
-      } catch (error) {
-        console.log("Error uploading audio:", error);
-        return {
-          error: "Failed to upload audio file",
-          //@ts-ignore
-          details: error.response?.data || error.message,
-          status: 500,
-        };
-      }
+      
     });
 
-
-    // Generate Image Prompt from Script (modified to use characterDescription)
+    // Generate Image Prompt from Script
     const GenerateImagePrompt = await step.run(
       "GenerateImagePrompt",
       async () => {
-        const FINAL_PROMPT = ImagePrompt.replace("{style}", videoStyle)
-          .replace("{script}", GenerateCaptions.result.transcription.full_transcript)
 
-        const result = await gemini.models.generateContentStream({
-          model,
-          config,
-          contents: FINAL_PROMPT,
+        await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+          recordId,
+          status: "Generating Image Prompts"
         });
 
-        let prompts = "";
-        for await (const chunk of result) {
-          prompts += chunk.text;
+        try {
+          const FINAL_PROMPT = ImagePrompt.replace("{style}", videoStyle)
+            .replace("{script}", GenerateCaptions.result.transcription.full_transcript)
+
+          const result = await gemini.models.generateContentStream({
+            model,
+            config,
+            contents: FINAL_PROMPT,
+          });
+
+          let prompts = "";
+          for await (const chunk of result) {
+            prompts += chunk.text;
+          }
+
+          return JSON.parse(prompts);
         }
 
-        return JSON.parse(prompts);
+        catch (error) {
+
+          throw new Error(
+            `Error generating image prompts for record ${recordId}: ${error}`
+          );
+        }
       }
     );
 
     // Generate Images using AI
-
     const GenerateImages = await step.run("GenerateImages", async () => {
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Generating Images"
+      });
+
       let images_buffer = [];
 
       images_buffer = await Promise.all(
-        GenerateImagePrompt.map(
-          async (
-            prompt: { imagePrompt: string; sceneContent: string },
-            index: number
-          ) => {
-            let base64
+        GenerateImagePrompt.map(async (prompt: { imagePrompt: string; sceneContent: string }, index: number) => {
+          let base64;
+          let geminiError = false;
+
+          // Try Gemini first
+          try {
+            console.log(`Generating image ${index + 1} with Gemini:`, prompt.imagePrompt);
+
             const imagenRequest = await gemini.models.generateImages({
-                    model: 'models/imagen-4.0-generate-preview-06-06',
-                    prompt: prompt.imagePrompt,
-                    config: {
-                        numberOfImages: 1,
-                        outputMimeType: 'image/jpeg',
-                        aspectRatio: '9:16',                    },
+              model: 'models/imagen-4.0-generate-preview-06-06',
+              prompt: prompt.imagePrompt + " Do not add any text anywhere in the image where it should not be present",
+              config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/jpeg',
+                aspectRatio: '9:16',
+              },
             });
 
             base64 = imagenRequest.generatedImages?.[0]?.image?.imageBytes;
-            if (base64 === undefined) {
-              const fluxReq = await a44Client.images.generate({
-                  model: "provider-6/FLUX.1-kontext-max",
-                  prompt: prompt.imagePrompt,
-                  response_format: "b64_json",
-                  output_compression: 50,
-                  size: "1024x1536",
-            });
+          } catch (error) {
+            console.error(`Gemini failed for image ${index + 1}:`, error);
+            geminiError = true;
+          }
+
+          // Fallback to FLUX if Gemini fails
+          if (!base64 || geminiError) {
+            try {
+              console.log(`Falling back to FLUX for image ${index + 1}:`, prompt.imagePrompt);
+
+              // Validate prompt length (common cause of 400 errors)
+              let fluxPrompt = prompt.imagePrompt + " Do not add any text anywhere in the image where it should not be present";
+              if (fluxPrompt.length > 1000) { // Adjust limit as needed
+                console.warn(`Prompt too long (${fluxPrompt.length} chars), truncating`);
+                fluxPrompt = fluxPrompt.substring(0, 1000);
+              }
+
+              const fluxReq = await a4fClient.images.generate({
+                model: "provider-6/sana-1.5-flash",
+                prompt: fluxPrompt,
+                response_format: "b64_json",
+                output_compression: 50,
+                size: "1024x1792",
+              });
 
               base64 = fluxReq.data?.[0]?.b64_json;
-            }
 
-          
-            //@ts-ignore
-            
-            return { base64, ...prompt };
+              if (!base64) {
+                throw new Error("FLUX API returned no image data");
+              }
+            } catch (fluxError: any) {
+              console.error(`FLUX also failed for image ${index + 1}:`, fluxError);
+
+              // Log the full error details
+              console.error("FLUX Error Details:", {
+                message: fluxError.message,
+                status: fluxError.status,
+                prompt: prompt.imagePrompt,
+                promptLength: prompt.imagePrompt.length
+              });
+
+              throw new Error(`Both Gemini and FLUX failed for image ${index + 1}: ${fluxError.message}`);
+            }
           }
-        )
+
+          return { base64, ...prompt };
+        })
       );
-      console.log(images_buffer)
+
+      console.log(`Successfully generated ${images_buffer.length} images`);
       return images_buffer;
     });
-    
+
     const UploadToStorage = await step.run("UploadToStorage", async () => {
       const imagePaths = await Promise.all(
         GenerateImages.map(async (image, index) => {
@@ -266,6 +315,7 @@ export const GenerateVideoData = inngest.createFunction(
 
           if (uploadError) {
             console.error("Supabase image upload error:", uploadError);
+         
             throw new Error(
               `Supabase image upload error: ${uploadError.message}`
             );
@@ -274,7 +324,6 @@ export const GenerateVideoData = inngest.createFunction(
           const { data: publicUrlData } = supabase.storage
             .from("media")
             .getPublicUrl(imagePathInStorage);
-          console.log(`Image file uploaded to: ${publicUrlData.publicUrl}`);
 
           return {
             imageUrl: publicUrlData.publicUrl,
@@ -294,11 +343,11 @@ export const GenerateVideoData = inngest.createFunction(
               ({ text }: utterance) => {
                 return sceneContent
                   .toLowerCase()
-                  .includes(text.toLowerCase());
+                  .includes(text.toLowerCase()) || text.toLowerCase().includes(sceneContent.toLowerCase());
               }
             );
 
-          const start = index === 0 ? 0 : parseFloat((relatedTranscript[0]?.start).toFixed(3));
+          const start = index === 0 ? 0 : relatedTranscript[0]?.start ? parseFloat((relatedTranscript[0]?.start).toFixed(3)) : 0;
           const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end).toFixed(3));
 
           const duration = parseFloat((end - start).toFixed(3));
@@ -330,6 +379,12 @@ export const GenerateVideoData = inngest.createFunction(
     });
 
     const RenderVideo = await step.run("RenderVideo", async () => {
+
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Generating Video"
+      });
+
       // Render Video
       const video = await convex.query(api.videoData.GetVideoRecord, {
         recordId,
@@ -337,12 +392,10 @@ export const GenerateVideoData = inngest.createFunction(
 
       if (!video) {
         console.error(`Video record not found for recordId: ${recordId}`);
-        return {
-          renderId: null,
-          recordId,
-          status: "initiation_error",
-          message: "Video record not found",
-        };
+
+        throw new Error(
+          `Video record not found for recordId: ${recordId}`
+        );
       }
 
       const services = await getServices({
@@ -350,14 +403,12 @@ export const GenerateVideoData = inngest.createFunction(
         compatibleOnly: true,
       });
 
-      console.log("Services: ", services);
-
       const serviceName = services[0].serviceName;
 
       let renderResult;
       const prefetchedImages = await prefetchImages(video.images);
       console.log("Prefetched images: ", prefetchedImages);
-      try {
+      
         const renderVideo = renderMediaOnCloudrun({
           serviceName,
           region: "us-east1",
@@ -381,30 +432,24 @@ export const GenerateVideoData = inngest.createFunction(
             data: {
               recordId, // Pass recordId to the webhook
             },
-            webhookProgressInterval: 1, // Add this back as it was in the user's original code
+            webhookProgressInterval: 0.05, // Add this back as it was in the user's original code
           },
+        }).catch((error) => {
+          console.error("Error rendering video:", error);
+          throw error;
         });
 
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         console.log(`Remotion render initiated.`);
         return "initiated";
-      } catch (error) {
-        console.error("Error initiating Remotion render:", error);
-        // If the await itself throws (e.g., network error, or a very fast timeout),
-        // we might not even get a renderId.
-        return {
-          renderId: null,
-          recordId,
-          status: "initiation_error",
-          message: (error as Error).message,
-        };
-      }
+      
     });
 
     // The main function will return the result of RenderVideo step
     return RenderVideo;
-  }
+  },
+
 );
 
 export const HandleRemotionRenderWebhook = inngest.createFunction(
@@ -422,50 +467,20 @@ export const HandleRemotionRenderWebhook = inngest.createFunction(
       return { message: "Video record not found" };
     }
 
-    console.log(
-      `Remotion render status update for record ${recordId}, render ${renderId}: Progress ${progress}, Error: ${error}`
-    );
+    const downloadUrl =
+      "https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/" +
+      renderId +
+      "/out.mp4";
 
-    if (error) {
-      console.error(
-        `Remotion render failed for record ${recordId}, render ${renderId}: ${error}`
-      );
-      await step.run("update-video-record-failed", async () => {
-        await convex.mutation(api.videoData.UpdateVideoRecord, {
-          recordId,
-          audioUrl: video.audioUrl, // Use the public URL from Supabase
-          captionJson: video.captionJson,
-          images: video.images,
-          status: "failed",
-          script: video.script,
-        });
+
+    await step.run("update-video-record-success", async () => {
+      await convex.mutation(api.videoData.UpdateVideoRecord, {
+        recordId,
+        status: "Completed",
+        downloadUrl
       });
-      return { message: "Render failed, database updated" };
-    }
-
-    if (progress === 1) {
-      const downloadUrl =
-        "https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/" +
-        renderId +
-        "/out.mp4";
-      console.log(
-        `Remotion render completed for record ${recordId}, render ${renderId}. Public URL: ${downloadUrl}`
-      );
-      await step.run("update-video-record-success", async () => {
-        await convex.mutation(api.videoData.UpdateVideoRecord, {
-          recordId,
-          downloadUrl,
-          audioUrl: video.audioUrl, // Use the public URL from Supabase
-          captionJson: video.captionJson,
-          images: video.images,
-          status: "completed",
-          script: video.script,
-        });
-      });
-      return { message: "Render completed, database updated" };
-    }
-
-    // If not completed and no error, just acknowledge the progress update
-    return { message: "Render progress update received" };
+    });
+    return { message: "Render completed, database updated" };
   }
+
 );

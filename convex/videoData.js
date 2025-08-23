@@ -13,10 +13,9 @@ export const CreateVideoData = mutation({
             })),
             uid: v.id('users'),
             createdBy: v.string(),
-            credits: v.number()
         },
-    handler: async({db},args) => {
-        const result = await db.insert('videoData',{
+    handler: async(ctx, args) => {
+        const result = await ctx.db.insert('videoData',{
             title: args.title,
             topic:args.topic,
             videoStyle:args.videoStyle,
@@ -24,11 +23,13 @@ export const CreateVideoData = mutation({
             voice:args.voice,
             uid:args.uid,
             createdBy:args.createdBy,
-            status: 'pending',
+            status: 'Queued',
         });
 
-        await db.patch(args.uid, {
-            credits: args.credits - 1
+        // Deduct 1 credit using the atomic AdjustUserCredits mutation
+        await ctx.runMutation("user:AdjustUserCredits", {
+            userId: args.uid,
+            amount: -1
         });
 
         return result
@@ -38,29 +39,55 @@ export const CreateVideoData = mutation({
 export const UpdateVideoRecord = mutation({
     args: {
         recordId: v.id('videoData'),
-        audioUrl : v.optional(v.string()),
+        audioUrl: v.optional(v.string()),
         images: v.optional(v.array(v.object({
             image: v.string(),
-            start: v.any(),
-            duration: v.any()
+            start: v.number(),
+            duration: v.number()
         }))),
-        script: v.string(),
+        script: v.optional(v.string()),
         status: v.optional(v.string()),
         captionJson: v.optional(v.any()),
-        downloadUrl: v.optional(v.string())
-    },
-    handler: async({db},args) => {
-        const result = await db.patch(args.recordId, {
-            audioUrl: args.audioUrl,
-            images: args.images,
-            captionJson: args.captionJson,
-            status: args.status,
-            script: args.script,
-            downloadUrl: args.downloadUrl
-        });
-        return result
+        downloadUrl: v.optional(v.string()),
+        renderProgress: v.optional(v.number())
+    }, // Added missing closing brace
+    handler: async({db}, args) => {
+        // Build update object with only provided fields
+        const updateData = {};
+        
+        if (args.audioUrl !== undefined) {
+            updateData.audioUrl = args.audioUrl;
+        }
+        
+        if (args.images !== undefined) {
+            updateData.images = args.images;
+        }
+        
+        if (args.captionJson !== undefined) {
+            updateData.captionJson = args.captionJson;
+        }
+        
+        if (args.status !== undefined) {
+            updateData.status = args.status;
+        }
+        
+        if (args.script !== undefined) {
+            updateData.script = args.script;
+        }
+        
+        if (args.downloadUrl !== undefined) {
+            updateData.downloadUrl = args.downloadUrl;
+        }
+        
+        if (args.renderProgress !== undefined) {
+            updateData.renderProgress = args.renderProgress;
+        }
+        
+        // Single patch operation
+        const result = await db.patch(args.recordId, updateData);
+        return result;
     }
-})
+});
 
 export const GetUsersVideo = query({
     args: {
@@ -78,6 +105,37 @@ export const GetVideoRecord = query({
     },
     handler: async({db},args) => {
         const result = await db.get(args.recordId);
+        return result
+    }
+})
+
+
+// Update status of video record
+
+export const UpdateVideoRecordStatus = mutation({
+    args: {
+        recordId: v.id('videoData'),
+        status: v.string(),
+        comments: v.optional(v.any())
+    },
+    handler: async(ctx, args) => {
+        
+        const videoRecord = await ctx.db.get(args.recordId);
+        if(!videoRecord._id) return
+
+        const result = await ctx.db.patch(args.recordId, {
+            status: args.status,
+            comments: args.comments
+        });
+
+        // return credit to user if video generation gets failed without running into race condition
+        if(args.status === "Failed" && videoRecord.status !== "Failed") {
+                // Add 1 credit using the atomic AdjustUserCredits mutation
+                await ctx.runMutation("user:AdjustUserCredits", {
+                    userId: videoRecord.uid,
+                    amount: 1
+                });
+        }
         return result
     }
 })

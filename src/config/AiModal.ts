@@ -23,7 +23,7 @@ const a4fBaseUrl = 'https://api.a4f.co/v1';
       apiKey: process.env.ELEVEN_LABS_API_KEY,
   });
 
- export const a44Client = new OpenAI({
+ export const a4fClient = new OpenAI({
     apiKey: a4fApiKey,
     baseURL: a4fBaseUrl
 });

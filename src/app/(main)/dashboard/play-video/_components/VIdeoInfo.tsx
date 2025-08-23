@@ -14,11 +14,11 @@ const VIdeoInfo = ({videoData} : {videoData: any}) => {
       </Link>
       <div className='flex flex-col h-full gap-3 relative'>
         <h2 className='mt-5'>Project Name : {videoData?.title}</h2>
-        <p className='text-gray-500'>Script : {videoData?.script}</p>
+        <p className='text-gray-500'><span className='text-white'>Script</span> : {videoData?.script}</p>
         <h2 className='mb-16'>Video Style : {videoData?.videoStyle}</h2>
         {videoData?.downloadUrl ? <Link href={videoData?.downloadUrl || ''}  className='w-full absolute bottom-5' download target='_blank' >
         <Button className='w-full'><DownloadIcon /> Download</Button>
-        </Link> : <Button className='w-full' disabled><Loader2 className='animate-spin' /> Rendering...</Button>}
+        </Link> : <Button className='w-full absolute bottom-5' disabled><Loader2 className='animate-spin' /> Rendering...</Button>}
       </div>
     </>
   )

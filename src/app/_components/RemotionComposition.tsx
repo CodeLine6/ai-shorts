@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect } from 'react'
-import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring } from 'remotion'
+import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring, Easing  } from 'remotion'
 import {
   springTiming,
   TransitionSeries,
@@ -18,14 +18,15 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
   const frame = useCurrentFrame();
   const captionClass = videoData.caption.style
 
-  useEffect(() => {
-    videoData && getDurationFrame()
-  }, [videoData])
-  const getDurationFrame = () => {
-    const totalDuration = (sentences[sentences.length - 1].end + 1) * fps
-    //setDurationInFrames(Number(totalDuration.toFixed(0)) + 100)
-    return totalDuration
-  }
+  const zoomCycleDuration = fps * 20;
+
+  const continuousZoomScale = interpolate(
+    frame % zoomCycleDuration,
+    [0, zoomCycleDuration / 2, zoomCycleDuration],
+    [1, 2, 1], // Zoom from 1x to 1.2x and back to 1x within each cycle
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.linear // Add linear easing
+ }
+  );
 
   const getCurrentCaption = () => {
     const singleCaption: word[] = []
@@ -45,10 +46,11 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
         <TransitionSeries>
           {imageList?.map((image: any, index: number) => {
             const duration = image.duration * fps
+            const currentImageDuration = index === imageList.length - 1 ? duration + 70 : duration + 40
 
             return (
               <>
-                <TransitionSeries.Sequence key={index} durationInFrames={duration + 40}>
+                <TransitionSeries.Sequence key={index} durationInFrames={currentImageDuration}>
                   <AbsoluteFill>
                     <img
                       src={image.image}
@@ -56,15 +58,7 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        transform: `scale(${interpolate(
-                          frame,
-                          [image.start * fps, (image.start + image.duration / 2) * fps, (image.start + image.duration) * fps],
-                          [1, 1.2, 1],
-                          {
-                            extrapolateLeft: 'clamp',
-                            extrapolateRight: 'clamp',
-                          }
-                        )})`,
+                        transform: `scale(${continuousZoomScale})`,
                       }}
                     />
                   </AbsoluteFill>
