@@ -1,4 +1,3 @@
-import { inngest } from "@/inngest/client";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../convex/_generated/api";
@@ -9,31 +8,37 @@ export async function POST(request: Request) {
     const payload = await request.json();
     console.log("Received Remotion webhook payload:", payload);
 
+    // Handle error case
     if(payload.error) {
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId: payload.recordId,
         status: "Failed",
         comments: payload.error
-      })
-      return NextResponse.json({ message: "Webhook received" }, { status: 200 });
+      });
+      return NextResponse.json({ message: "Webhook received - render failed" }, { status: 200 });
     }
 
-    if(payload.progress < 1) 
-    {
+    // Handle progress updates
+    if(payload.progress < 1) {
       await convex.mutation(api.videoData.UpdateVideoRecord, {
         recordId: payload.recordId,
-        renderProgress : payload.progress * 100
-      })
-      return NextResponse.json({ message: "Webhook received" }, { status: 200 });
+        renderProgress: payload.progress * 100
+      });
+      return NextResponse.json({ message: "Webhook received - progress updated" }, { status: 200 });
     }
 
-    // Send an Inngest event with the webhook payload
-    await inngest.send({
-      name: "remotion/render.status",
-      data: payload,
+    // Handle completion (progress === 1)
+    const downloadUrl = `https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/${payload.renderId}/out.mp4`;
+    
+    await convex.mutation(api.videoData.UpdateVideoRecord, {
+      recordId: payload.recordId,
+      status: "Completed",
+      downloadUrl,
+      renderProgress: 100
     });
 
-    return NextResponse.json({ message: "Webhook received and Inngest event sent" }, { status: 200 });
+    return NextResponse.json({ message: "Webhook received - render completed" }, { status: 200 });
+    
   } catch (error) {
     console.error("Error processing Remotion webhook:", error);
     return NextResponse.json({ error: "Failed to process webhook" }, { status: 500 });

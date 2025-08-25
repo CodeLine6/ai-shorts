@@ -189,7 +189,7 @@ const formFields: FormState = {
             },
             {
                 type: "fieldType",
-                message: "Script must have content property",
+                message: "Script must not be empty",
                 value: "object",
                 objectShape: { content: "string", tts_text: "string" }
             }

@@ -72,7 +72,8 @@ export const GenerateVideoData = inngest.createFunction(
       }
 
       const VOICE_ID = voice.voiceId;
-      
+
+      try {
         const response = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
           {
@@ -96,7 +97,7 @@ export const GenerateVideoData = inngest.createFunction(
         if (!response.ok) {
           const errorText = await response.text();
           console.log("ElevenLabs API error:", errorText);
-      
+
           throw new Error(
             `ElevenLabs API error: ${response.status} - ${errorText}`
           );
@@ -118,7 +119,7 @@ export const GenerateVideoData = inngest.createFunction(
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
-        
+
           throw new Error(`Supabase upload error: ${uploadError.message}`);
         }
 
@@ -130,7 +131,12 @@ export const GenerateVideoData = inngest.createFunction(
           fileName,
           filePath: publicUrlData.publicUrl, // Store the public URL
         };
-      
+
+      } catch (error) {
+        console.error("ElevenLabs API error:", error);
+
+        throw new Error(`ElevenLabs API error: ${error.message}`);
+      }
     });
 
     // Generate Captions
@@ -141,13 +147,14 @@ export const GenerateVideoData = inngest.createFunction(
         status: "Generating Captions"
       });
 
-      const gladiaV2BaseUrl = "https://api.gladia.io/v2/";
-      const headers: Record<string, string> = {
-        //@ts-ignore
-        "x-gladia-key": process.env.GLADIA_API_KEY,
-        "Content-Type": "application/json",
-      };
-      
+      try {
+        const gladiaV2BaseUrl = "https://api.gladia.io/v2/";
+        const headers: Record<string, string> = {
+          //@ts-ignore
+          "x-gladia-key": process.env.GLADIA_API_KEY,
+          "Content-Type": "application/json",
+        };
+
         // Fetch the audio file from the public URL
 
         const requestData = {
@@ -164,7 +171,7 @@ export const GenerateVideoData = inngest.createFunction(
         ).data;
 
         if (!postTranscriptionResponse.result_url) {
-          
+
           throw new Error(
             `Gladia API returned invalid result_url: ${postTranscriptionResponse.result_url}`
           );
@@ -175,7 +182,14 @@ export const GenerateVideoData = inngest.createFunction(
         );
 
         return subtitles;
-      
+      }
+
+      catch (error) {
+        throw new Error(
+          `Error generating captions for record ${recordId}: ${error}`
+        );
+      }
+
     });
 
     // Generate Image Prompt from Script
@@ -305,30 +319,38 @@ export const GenerateVideoData = inngest.createFunction(
           const imageBuffer = Buffer.from(image.base64, "base64");
 
           // Upload image to Supabase Storage
-          const { data: uploadData, error: uploadError } =
-            await supabase.storage
-              .from("media") // Assuming you have a bucket named 'media'
-              .upload(imagePathInStorage, imageBuffer, {
-                contentType: "image/png",
-                upsert: false, // Set to true if you want to overwrite existing files
-              });
+          try {
+            const { data: uploadData, error: uploadError } =
+              await supabase.storage
+                .from("media") // Assuming you have a bucket named 'media'
+                .upload(imagePathInStorage, imageBuffer, {
+                  contentType: "image/png",
+                  upsert: false, // Set to true if you want to overwrite existing files
+                });
 
-          if (uploadError) {
-            console.error("Supabase image upload error:", uploadError);
-         
+            if (uploadError) {
+              console.error("Supabase image upload error:", uploadError);
+
+              throw new Error(
+                `Supabase image upload error: ${uploadError.message}`
+              );
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from("media")
+              .getPublicUrl(imagePathInStorage);
+
+            return {
+              imageUrl: publicUrlData.publicUrl,
+              sceneContent: image.sceneContent,
+            };
+
+          } catch (error) {
+            console.error("Supabase image upload error:", error);
             throw new Error(
-              `Supabase image upload error: ${uploadError.message}`
+              `Supabase image upload error: ${error.message}`
             );
           }
-
-          const { data: publicUrlData } = supabase.storage
-            .from("media")
-            .getPublicUrl(imagePathInStorage);
-
-          return {
-            imageUrl: publicUrlData.publicUrl,
-            sceneContent: image.sceneContent,
-          };
         })
       );
 
@@ -366,7 +388,8 @@ export const GenerateVideoData = inngest.createFunction(
 
     // Save All Data to Database
     const SaveToDatabase = await step.run("SaveToDatabase", async () => {
-      await convex.mutation(api.videoData.UpdateVideoRecord, {
+      try {
+        await convex.mutation(api.videoData.UpdateVideoRecord, {
         recordId,
         audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
         captionJson: {
@@ -376,16 +399,18 @@ export const GenerateVideoData = inngest.createFunction(
         images: ImageObject,
         script: GenerateCaptions.result.transcription.full_transcript,
       });
+      }
+      catch (error) {
+        console.error("Error saving to database:", error);
+        throw new Error(`Error saving to database: ${error.message}`);
+      }
     });
 
-    const RenderVideo = await step.run("RenderVideo", async () => {
-
+    const InitiateRender = await step.run("InitiateRender", async () => {
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId,
-        status: "Generating Video"
+        status: "Rendering Video",
       });
-
-      // Render Video
       const video = await convex.query(api.videoData.GetVideoRecord, {
         recordId,
       });
@@ -398,18 +423,51 @@ export const GenerateVideoData = inngest.createFunction(
         );
       }
 
-      const services = await getServices({
-        region: "us-east1",
-        compatibleOnly: true,
+      const result = await inngest.send({
+        name: "generate-video",
+        data: video,
       });
 
-      const serviceName = services[0].serviceName;
+      return result
+    });
 
-      let renderResult;
-      const prefetchedImages = await prefetchImages(video.images);
-      console.log("Prefetched images: ", prefetchedImages);
-      
-        const renderVideo = renderMediaOnCloudrun({
+    return InitiateRender// The main function will return the result of RenderVideo step
+  },
+);
+
+export const GenerateVideo = inngest.createFunction(
+  {
+    id: "generate-video",
+    concurrency: {
+      limit: 2, // Ensures only one instance of this function runs at a time
+    },
+    onFailure: async ({ event, error }: FailureEventArgs) => {
+      const { _idL: recordId } = event.data.event.data;
+      const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+        recordId,
+        status: "Failed",
+        comments: `Inngest function failed: ${error.message}`
+      });
+    },
+  },
+  { event: "generate-video" },
+  async ({ event, step }) => {
+    const GenerateVideo = await step.run("GenerateVideo", async () => {
+      const video = event.data;
+
+      try {
+        const services = await getServices({
+          region: "us-east1",
+          compatibleOnly: true,
+        });
+
+        const serviceName = services[0].serviceName;
+
+        const prefetchedImages = await prefetchImages(video.images);
+        console.log("Prefetched images: ", prefetchedImages);
+
+        const renderVideo = await renderMediaOnCloudrun({
           serviceName,
           region: "us-east1",
           serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
@@ -430,57 +488,21 @@ export const GenerateVideoData = inngest.createFunction(
               "Content-Type": "application/json",
             },
             data: {
-              recordId, // Pass recordId to the webhook
+              recordId: video._id, // Pass recordId to the webhook
             },
             webhookProgressInterval: 0.05, // Add this back as it was in the user's original code
           },
-        }).catch((error) => {
-          console.error("Error rendering video:", error);
-          throw error;
-        });
+        })
 
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        return renderVideo
+      }
+      catch (error) {
+        console.error("Error generating video:", error);
+        throw new Error(`Error generating video: ${error.message}`);
+      }
 
-        console.log(`Remotion render initiated.`);
-        return "initiated";
-      
     });
 
-    // The main function will return the result of RenderVideo step
-    return RenderVideo;
-  },
-
-);
-
-export const HandleRemotionRenderWebhook = inngest.createFunction(
-  { id: "handle-remotion-render-webhook" },
-  { event: "remotion/render.status" }, // Listen for the event sent by the webhook API route
-  async ({ event, step }) => {
-    const { recordId, renderId, progress, error } = event.data;
-    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-    const video = await convex.query(api.videoData.GetVideoRecord, {
-      recordId,
-    });
-
-    if (!video) {
-      console.error(`Video record not found for recordId: ${recordId}`);
-      return { message: "Video record not found" };
-    }
-
-    const downloadUrl =
-      "https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/" +
-      renderId +
-      "/out.mp4";
-
-
-    await step.run("update-video-record-success", async () => {
-      await convex.mutation(api.videoData.UpdateVideoRecord, {
-        recordId,
-        status: "Completed",
-        downloadUrl
-      });
-    });
-    return { message: "Render completed, database updated" };
+    return GenerateVideo
   }
-
-);
+)

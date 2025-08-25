@@ -24,6 +24,7 @@ export const CreateVideoData = mutation({
             uid:args.uid,
             createdBy:args.createdBy,
             status: 'Queued',
+            renderProgress: 0
         });
 
         // Deduct 1 credit using the atomic AdjustUserCredits mutation

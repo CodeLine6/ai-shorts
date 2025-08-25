@@ -69,7 +69,7 @@ const generateTtsTags = async (script: string) => {
 
         return {
             success: true,
-            tts_text: JSON.parse(text).tts_text
+            tts_text: JSON.parse(text).tts_text ?? "Couldn't generate tags"
         }
     } catch (error) {
         return {

@@ -52,7 +52,9 @@ function Topic({ onHandleInputChange, errors }: { onHandleInputChange: (fieldNam
             }}
           />
           {scriptErrors.length > 0 &&
-            <p className="text-sm text-red-500 mt-2">Please enter a script</p>
+            scriptErrors.map((error, index) => (
+              <p key={index} className="text-sm text-red-500 mt-2">{error}</p>
+            ))
           }
         </TabsContent>
         <TabsContent value="AUDIO">
