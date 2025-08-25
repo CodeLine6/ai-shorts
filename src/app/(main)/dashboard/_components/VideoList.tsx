@@ -14,13 +14,13 @@ const VideoItem = ({ video, index }: { video: VideoData, index: number }) => {
   return (
     <Link href={`/dashboard/play-video/${video?._id}`} key={index}>
       <div className="relative" key={index}>
-        {video?.status != 'Completed' && video?.status != 'Generating Video' && video?.status != 'Failed' ?
+        {video?.status != 'Completed' && video?.status != 'Generating Video' && video?.status != 'Failed' && video?.status == 'Render Failed' ?
           <div className="aspect-[2/3] p-5 w-full rounded-xl bg-slate-900 flex items-center justify-center gap-2">
             <RefreshCcw className="animate-spin" />
             <h2>{video?.status}</h2>
           </div>
           :
-          video?.status == 'Failed' ?
+          (video?.status == 'Failed' || video?.status == 'Render Failed') ?
             <div className="aspect-[2/3] p-5 w-full rounded-xl bg-red-900 flex items-center justify-center gap-2">
               <Ban />
               <h2>Failed</h2>

@@ -1,4 +1,4 @@
-import { pollForResult, prefetchImages } from "@/lib/utils";
+import { pollForResult} from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
 import supabase from "@/lib/supabase"; // Import Supabase client
@@ -6,8 +6,8 @@ import { gemini, config, model, a4fClient } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { sentence, utterance } from "../../convex/schema";
-import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
 import { FailureEventArgs } from "inngest";
+import { QueueVideo} from "@/actions/generateVideo";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
@@ -407,102 +407,11 @@ export const GenerateVideoData = inngest.createFunction(
     });
 
     const InitiateRender = await step.run("InitiateRender", async () => {
-      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
-        recordId,
-        status: "Rendering Video",
-      });
-      const video = await convex.query(api.videoData.GetVideoRecord, {
-        recordId,
-      });
-
-      if (!video) {
-        console.error(`Video record not found for recordId: ${recordId}`);
-
-        throw new Error(
-          `Video record not found for recordId: ${recordId}`
-        );
-      }
-
-      const result = await inngest.send({
-        name: "generate-video",
-        data: video,
-      });
-
-      return result
+      // Put the video in queue
+      const result = await QueueVideo(recordId);
+    
     });
 
     return InitiateRender// The main function will return the result of RenderVideo step
   },
 );
-
-export const GenerateVideo = inngest.createFunction(
-  {
-    id: "generate-video",
-    concurrency: {
-      limit: 2, // Ensures only one instance of this function runs at a time
-    },
-    onFailure: async ({ event, error }: FailureEventArgs) => {
-      const { _idL: recordId } = event.data.event.data;
-      const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-      await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
-        recordId,
-        status: "Failed",
-        comments: `Inngest function failed: ${error.message}`
-      });
-    },
-  },
-  { event: "generate-video" },
-  async ({ event, step }) => {
-    const GenerateVideo = await step.run("GenerateVideo", async () => {
-      const video = event.data;
-
-      try {
-        const services = await getServices({
-          region: "us-east1",
-          compatibleOnly: true,
-        });
-
-        const serviceName = services[0].serviceName;
-
-        const prefetchedImages = await prefetchImages(video.images);
-        console.log("Prefetched images: ", prefetchedImages);
-
-        const renderVideo = await renderMediaOnCloudrun({
-          serviceName,
-          region: "us-east1",
-          serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
-          composition: "youtubeShort",
-          inputProps: {
-            videoData: {
-              // @ts-ignore
-              audioUrl: video.audioUrl, // Use Supabase URL
-              captionJson: video.captionJson,
-              images: prefetchedImages,
-              caption: video.caption,
-            },
-          },
-          codec: "h264",
-          renderStatusWebhook: {
-            url: `${process.env.NEXTAUTH_URL}/api/remotion-webhook`, // Point to the new API route
-            headers: {
-              "Content-Type": "application/json",
-            },
-            data: {
-              recordId: video._id, // Pass recordId to the webhook
-            },
-            webhookProgressInterval: 0.05, // Add this back as it was in the user's original code
-          },
-        })
-
-        return renderVideo
-      }
-      catch (error) {
-        console.error("Error generating video:", error);
-        throw new Error(`Error generating video: ${error.message}`);
-      }
-
-    });
-
-    return GenerateVideo
-  }
-)

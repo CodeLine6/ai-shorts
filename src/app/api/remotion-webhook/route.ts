@@ -1,6 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../convex/_generated/api";
+import {GenerateVideo} from "@/actions/generateVideo";
 
 export async function POST(request: Request) {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     if(payload.error) {
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId: payload.recordId,
-        status: "Failed",
+        status: "Render Failed",
         comments: payload.error
       });
       return NextResponse.json({ message: "Webhook received - render failed" }, { status: 200 });
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
       downloadUrl,
       renderProgress: 100
     });
+
+    await GenerateVideo();
 
     return NextResponse.json({ message: "Webhook received - render completed" }, { status: 200 });
     
