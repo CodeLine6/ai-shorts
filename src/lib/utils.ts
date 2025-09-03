@@ -77,20 +77,51 @@ export async function moveSupabaseFile(title: string, audioUrl: string, videoId:
           return publicUrlData.publicUrl 
 }
 
+// Helper function for fetching with retry and timeout
+async function retryFetch(url: string, options: RequestInit, retries = 3, timeout = 10000) {
+  for (let i = 0; i < retries; i++) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response;
+    } catch (error: any) {
+      clearTimeout(id);
+      if (i < retries - 1) {
+        console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying...`, error.message);
+        await new Promise(res => setTimeout(res, 1000 * (i + 1))); // Exponential backoff
+      } else {
+        throw new Error(`Fetch failed after ${retries} attempts for ${url}: ${error.message}`);
+      }
+    }
+  }
+  throw new Error("Should not reach here"); // Fallback in case loop finishes without returning
+}
+
 export const prefetchImages = async (imageArray: any[]) => {
   const fetchedImages = [];
 
   for (const image of imageArray) {
-    const response = await fetch(image.image);
-    const blob = await response.blob();
+    try {
+      const response = await retryFetch(image.image, {}, 3, 10000); // 3 retries, 10-second timeout
+      const blob = await response.blob();
 
-    const arrayBuffer = await blob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const dataUrl = `data:${blob.type};base64,${buffer.toString('base64')}`;
-    fetchedImages.push({
-      ...image,
-      image: dataUrl,
-    });
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const dataUrl = `data:${blob.type};base64,${buffer.toString('base64')}`;
+      fetchedImages.push({
+        ...image,
+        image: dataUrl,
+      });
+    } catch (error) {
+      console.error(`Failed to prefetch image ${image.image} after multiple retries:`, error);
+      // Optionally, push a placeholder image or skip this image
+      // For now, we'll skip it and log the error
+    }
   }
 
   return fetchedImages;

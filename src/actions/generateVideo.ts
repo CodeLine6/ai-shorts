@@ -21,11 +21,13 @@ export const QueueVideo = async (videoId: any) => {
 export const GenerateVideo =  async() => {
       const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+      
       const nextVideo = await convex.query(api.videoData.getNextQueuedVideo, {});
       if (!nextVideo) {
           return { message: "Queue is empty" };
       }
 
+      try {
       await convex.mutation(api.videoData.startRendering, {
         videoId: nextVideo._id,
       });
@@ -38,7 +40,6 @@ export const GenerateVideo =  async() => {
         const serviceName = services[0].serviceName;
 
         const prefetchedImages = await prefetchImages(nextVideo.images);
-        console.log("Prefetched images: ", prefetchedImages);
 
         const renderVideo = renderMediaOnCloudrun({
           serviceName,
@@ -79,6 +80,15 @@ export const GenerateVideo =  async() => {
                 });
           throw new Error(`Error rendering video: ${error.message}`);
         });
+
+      } catch (error) {
+          console.error("Error rendering video 2:", error);
+          await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+                  recordId: nextVideo._id,
+                  status: "Render Failed",
+                  comments: `Rendering video failed: ${error.message}`
+          });
+      }
 
         return "Video is being rendered";
 };

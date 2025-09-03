@@ -3,6 +3,7 @@ import { Composition } from 'remotion';
 import RemotionComposition from './../src/app/_components/RemotionComposition';
 import './styles.css';
 import * as z from 'zod';
+import { musicTracks } from '../src/config/musicTracks';
 
 const videoData = {
   audioUrl: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j9740nggz2t7jncdt54k7br4917p1178/audio/The_Skills_of_Tomorrow-1755664666862.mp3",
@@ -767,7 +768,8 @@ const videoData = {
   name: "Youtuber",
   style:
     "text-yellow-400 font-semibold uppercase tracking-wide drop-shadow-md px-3 py-1 rounded-lg",
-}
+},
+musicTrack: musicTracks[0],
 }
 
 const videoDataSchema = z.object({
@@ -810,7 +812,11 @@ const videoDataSchema = z.object({
   caption: z.object({
     name: z.string(),
     style: z.string(),
-  })
+  }),
+  musicTrack: z.object({
+    name: z.string(),
+    url: z.string(),
+  }).optional(),
 })
 
 const calculateMetadata = ({props} : {props: {videoData: z.infer<typeof videoDataSchema>}}) => {
@@ -833,7 +839,9 @@ export const RemotionRoot: React.FC = () => {
         width={720}
         height={1280}
         defaultProps={{
-          videoData: videoData
+          videoData: {
+            ...videoData,
+          }
         }}
         schema={z.object({ videoData: videoDataSchema })}
         calculateMetadata={calculateMetadata}
