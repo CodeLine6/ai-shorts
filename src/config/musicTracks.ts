@@ -3,7 +3,7 @@ import { AudioItem } from "@/app/(main)/dashboard/create-new-video/types";
 export const musicTracks: AudioItem[] = [
   {
     name: "Upbeat Corporate",
-    url: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/shorts-background-music/Upbeat_Corporate.m4a",
+    url: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/shorts-background-music/Upbeat_Corporate.mp3",
   },
   {
     name: "Inspiring Cinematic",
