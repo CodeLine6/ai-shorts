@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect } from 'react'
-import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring, Easing  } from 'remotion'
+import { AbsoluteFill, Audio, interpolate, useCurrentFrame, useVideoConfig, spring, Easing, Series  } from 'remotion'
 import {
   springTiming,
   TransitionSeries,
@@ -112,6 +112,9 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
         </h2>
       </AbsoluteFill>
       {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
+      {videoData?.musicTrack?.url && (
+        <Audio src={videoData.musicTrack.url} loop volume={0.4} />
+      )}
     </div>
   )
 }

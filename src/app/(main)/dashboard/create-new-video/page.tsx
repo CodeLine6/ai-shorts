@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import Title from "./_components/Title";
 import { FormAction, FormState, ValidationRule } from "./types";
 import { moveSupabaseFile } from "@/lib/utils";
+import MusicSelection from "./_components/MusicSelection";
 
 
 // Enhanced validation functions
@@ -253,6 +254,18 @@ const formFields: FormState = {
                 objectShape: { name: "string", style: "string" }
             }
         ]
+    },
+    musicTrack: {
+        value: undefined,
+        error: [],
+        rules: [
+            {
+                type: "fieldType",
+                message: "Music track must have name and url",
+                value: "object",
+                objectShape: { name: "string", url: "string" }
+            }
+        ]
     }
 }
 
@@ -326,7 +339,10 @@ function Page() {
             field.error = validateField(field.value, field.rules, validatedData);
         });
 
-        return Object.values(validatedData).some(field => field.error.length > 0);
+        // Exclude musicTrack from required validation if it's optional
+        const fieldsToCheck = Object.values(validatedData).filter(field => field !== validatedData.musicTrack);
+
+        return fieldsToCheck.some(field => field.error.length > 0);
     }
 
     const handleSubmit = (): void => {
@@ -365,6 +381,7 @@ function Page() {
                 videoStyle: formData.videoStyle.value,
                 caption: formData.captionStyle.value,
                 voice: formData.voice.value,
+                musicTrack: formData.musicTrack.value, // Add musicTrack to the record
                 //@ts-ignore
                 uid: user._id,
                 createdBy: user?.email || "Unknown",
@@ -441,6 +458,10 @@ function Page() {
                     <Captions
                         onHandleInputChange={onHandleInputChange}
                         errors={formData.captionStyle.error}
+                    />
+                    <MusicSelection
+                        onHandleInputChange={onHandleInputChange}
+                        errors={formData.musicTrack.error}
                     />
                     <Button
                         disabled={loading}

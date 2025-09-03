@@ -6,6 +6,7 @@ const SCRIPT_PROMPT = `write two different script for 30 to 50 Seconds video on 
 • Do not add Scene descriptions
 • Do not add anything in Braces. Just return plain story in text 
 • Create two versions of the script, One with just text and other with text and tags specifying the tone & pace of the speaker which will be used to generate text to speech.
+• Be creative and avoid generic or repetitive phrasing.
 • Give me response in JSON format and follow the schema
 -{
   scripts:[
@@ -37,7 +38,7 @@ A Drill sergeant speaking to a soldier
   "scripts": [
     {
         "content" : "You are pure scum, private! You think you have what it takes to be the BEST?! you're an embarrassment to the force - get OUTTA MY SIGHT!! ooohh, but it's too 'DIFFICULT'..,[high pitched voice]I don't have enough strength or willpower, I'm far too scared! ENOUGH OF THAT! you amuse me, soldier, AND YOU MAKE ME SICK!",
-        "tts_text: "You are pure scum, private! You think you have what it takes to be the BEST?! [chuckles] you're an embarrassment to the force - get OUTTA MY SIGHT!! [high pitched voice] ooohh, but it's too 'DIFFICULT'..,[high pitched voice]I don't have enough strength or willpower, I'm far too scared! [laughs] ENOUGH OF THAT! you amuse me, soldier, AND YOU MAKE ME SICK!"
+        "tts_text: "[angry] You are pure scum, private! You think you have what it takes to be the BEST?! [chuckles] you're an embarrassment to the force - get OUTTA MY SIGHT!! [high pitched voice] ooohh, but it's too 'DIFFICULT'..,[high pitched voice]I don't have enough strength or willpower, I'm far too scared! [laughs] ENOUGH OF THAT! you amuse me, soldier, AND YOU MAKE ME SICK!"
     }
   ]
 }

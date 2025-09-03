@@ -63,6 +63,7 @@ export default defineSchema(
         videoStyle: v.string(),
         caption: v.any(),
         voice: v.optional(v.object({ voiceId: v.string(), name: v.string() })),
+        musicTrack: v.optional(v.object({ name: v.string(), url: v.string() })),
         images: v.optional(v.any()), audioUrl: v.optional(v.string()),
         captionJson: v.optional(v.any()), uid: v.id('users'),
         createdBy: v.string(), status: v.optional(v.string()),
@@ -72,7 +73,9 @@ export default defineSchema(
         queuedAt: v.optional(v.string()), // When it was added to queue 
         renderStartedAt: v.optional(v.string()), // When rendering actually started 
         renderId: v.optional(v.string()), // CloudRun render ID 
-        bucketName: v.optional(v.string()), // GCS bucket name 
+        bucketName: v.optional(v.string() || null), // GCS bucket name
+        trashed: v.optional(v.boolean()),
+        createdAt: v.optional(v.string()),
       }).index("by_uid", ["uid"])
       .index("by_status", ["status"])
       .index("by_queuedAt", ["queuedAt"]) // For queue ordering 
@@ -88,6 +91,10 @@ export interface VideoData {
   voice: {
     voiceId: string;
     name: string;
+  };
+  musicTrack: {
+    name: string;
+    url: string;
   };
   images: any;
   audioUrl: string;

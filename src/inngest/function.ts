@@ -5,7 +5,7 @@ import supabase from "@/lib/supabase"; // Import Supabase client
 import { gemini, config, model, a4fClient } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
-import { sentence, utterance } from "../../convex/schema";
+import { utterance } from "../../convex/schema";
 import { FailureEventArgs } from "inngest";
 import { QueueVideo} from "@/actions/generateVideo";
 
@@ -84,12 +84,8 @@ export const GenerateVideoData = inngest.createFunction(
               Accept: "audio/mpeg",
             },
             body: JSON.stringify({
-              text: script.content,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: {
-                stability: 0.5,
-                similarity_boost: 0.5,
-              },
+              text: script.tts_text,
+              model_id: "eleven_v3",
             }),
           }
         );
@@ -390,17 +386,17 @@ export const GenerateVideoData = inngest.createFunction(
     const SaveToDatabase = await step.run("SaveToDatabase", async () => {
       try {
         await convex.mutation(api.videoData.UpdateVideoRecord, {
-        recordId,
-        audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
-        captionJson: {
-          sentences: GenerateCaptions.result.transcription.sentences,
-          utterances: GenerateCaptions.result.transcription.utterances,
-        },
-        images: ImageObject,
-        script: GenerateCaptions.result.transcription.full_transcript,
-      });
+          recordId,
+          audioUrl: GenerateAudioFile.filePath, // Use the public URL from Supabase
+          captionJson: {
+            sentences: GenerateCaptions.result.transcription.sentences,
+            utterances: GenerateCaptions.result.transcription.utterances,
+          },
+          images: ImageObject,
+          script: GenerateCaptions.result.transcription.full_transcript,
+        });
       }
-      catch (error) {
+      catch (error: any) {
         console.error("Error saving to database:", error);
         throw new Error(`Error saving to database: ${error.message}`);
       }

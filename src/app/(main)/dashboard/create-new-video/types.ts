@@ -28,6 +28,11 @@ export interface ScriptConfig {
     tts_text: string;
 }
 
+export interface AudioItem {
+    name: string;
+    url: string; // URL for playback
+}
+
 export interface FormState {
     title: FormField<string>;
     topic: FormField<string | undefined>;
@@ -36,6 +41,7 @@ export interface FormState {
     audioUrl: FormField<string | undefined>;
     videoStyle: FormField<string>;
     captionStyle: FormField<CaptionConfig | undefined>;
+    musicTrack: FormField<AudioItem | undefined>;
 }
 
 export interface FormAction {

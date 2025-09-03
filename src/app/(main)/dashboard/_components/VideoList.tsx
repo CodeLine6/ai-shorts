@@ -7,43 +7,98 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { api } from "../../../../../convex/_generated/api"
 import moment from "moment"
-import { RefreshCcw, Ban } from "lucide-react"
-import { VideoData } from "../../../../../convex/schema"
+import { RefreshCcw, Ban, EllipsisVertical, Trash, RotateCcw } from "lucide-react"
+import { VideoData } from "@/../convex/schema"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, } from "@/components/ui/alert-dialog"
+import { Id } from "@/../convex/_generated/dataModel"
+import { Progress } from "@/components/ui/progress"
+import { toast } from "@/hooks/use-toast";
+import { QueueVideo } from "@/actions/generateVideo"
 
-const VideoItem = ({ video, index }: { video: VideoData, index: number }) => {
+
+const RenderProgress = ({status,progress} : {status: string,progress: number}) => {
+  if(status == 'Completed') return null
+  return (      
+         <div className="w-3/4 text-center">
+                  <p className="mb-2">Rendering</p>
+                  <div className="w-3/4 mx-auto"><Progress value={progress}  /></div>
+          </div>        
+      )
+}
+
+const VideoStatus = ({status,progress} : {status: string,progress: number}) => {
+  if(status == 'Completed') return null
   return (
-    <Link href={`/dashboard/play-video/${video?._id}`} key={index}>
-      <div className="relative" key={index}>
-        {video?.status != 'Completed' && video?.status != 'Generating Video' && video?.status != 'Failed' && video?.status == 'Render Failed' ?
-          <div className="aspect-[2/3] p-5 w-full rounded-xl bg-slate-900 flex items-center justify-center gap-2">
-            <RefreshCcw className="animate-spin" />
-            <h2>{video?.status}</h2>
-          </div>
-          :
-          (video?.status == 'Failed' || video?.status == 'Render Failed') ?
-            <div className="aspect-[2/3] p-5 w-full rounded-xl bg-red-900 flex items-center justify-center gap-2">
+    <div className={`absolute top-0 left-0 w-full h-full ${status.includes('Failed') ? 'bg-red-900' : 'bg-black'} bg-opacity-80 flex items-center justify-center gap-2`}>
+      {status.includes('Failed') ?
+            <>
               <Ban />
               <h2>Failed</h2>
-            </div>
-            :
-            <div className="relative aspect-[2/3]">
-              {video.status == 'Generating Video' && <><div
-                className="absolute top-0 left-0 w-full h-full bg-black opacity-70"
-                style={{ clipPath: `inset(${video.renderProgress}% 0 0 0)`,transition: "clip-path 0.3s ease-in-out" }} />
-                <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-whitet">
-                  <p>Rendering<br/></p>
-                  {video.renderProgress}%
-                </div>
-              </>}
-              <Image
+            </>
+
+        :  status == "Rendering" ?  <RenderProgress status={status} progress={progress} />
+        :
+          <>
+            <RefreshCcw className="animate-spin" />
+            <h2>{status}</h2>
+          </>
+      }
+    </div>
+  )
+}
+
+const VideoItem = ({ video, index }: { video: VideoData, index: number }) => {
+  const convex = useConvex();
+  const handleRegenerate = async () => {
+    await QueueVideo(video._id) 
+    toast({
+      title: "Video Queued",
+      description: "Video successfully added to the render queue.",
+    })
+  }
+  return (
+    <Link href={`/dashboard/play-video/${video?._id}`} key={index}>
+      <div className="relative aspect-[2/3] rounded-md overflow-hidden" key={index}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button className="absolute top-2 right-2 rounded-full pl-[13px] pr-[12px] hover:bg-gray-800 hover:bg-opacity-50 z-10" variant={"ghost"} ><EllipsisVertical /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault() }} onClick={(e) => e.target.closest('div[data-state="open"]').style.visibility = 'hidden'}>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <div className="flex items-center w-full cursor-pointer">
+                    <Trash className="mr-2" width={20} /> Delete
+                  </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the video.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={async () => await convex.mutation(api.videoData.trashVid, { recordId: video?._id as Id<"videoData"> })}>Continue</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuItem>
+            {video?.status == "Render Failed" &&
+            <DropdownMenuItem className="cursor-pointer" onClick={handleRegenerate}><RotateCcw /> Retry</DropdownMenuItem>}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {video?.images?.[0].image &&<Image
                 src={video?.images[0].image}
                 width={500}
                 height={500}
                 alt={video?.title}
                 className="w-full object-cover rounded-xl aspect-[2/3]"
-              />
-            </div>
-        }
+        />}
+        <VideoStatus status={video?.status} progress={video?.renderProgress} />
+
         <div className="absolute bottom-1 text-center w-full">
           <h2>{video?.title}</h2>
           <h2 className="text-sm">{moment(video?._creationTime).fromNow()}</h2>
@@ -94,7 +149,5 @@ function VideoList() {
     </div>
   )
 }
-
-
 
 export default VideoList

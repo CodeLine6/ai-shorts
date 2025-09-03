@@ -9,7 +9,6 @@ import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import '@uppy/audio/dist/style.min.css';
 import { FormState } from "../types";
-import { on } from "events";
 
 function AudioTabContent({onHandleInputChange,clearScriptandTopic}: {onHandleInputChange: (fieldName: keyof FormState, fieldValue: string | undefined) => void, clearScriptandTopic: () => void}) {
     const { uppy, progress, status } = useContext(UppyContext);

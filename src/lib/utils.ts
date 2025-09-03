@@ -43,6 +43,7 @@ export async function moveSupabaseFile(title: string, audioUrl: string, videoId:
           if (!response.ok) {
               throw new Error(`Failed to fetch audio from ${audioUrl}: ${response.statusText}`);
           }
+
           const audioBlob = await response.blob(); // Get as Blob
   
           // Upload the fetched content to the 'media' bucket
@@ -61,9 +62,7 @@ export async function moveSupabaseFile(title: string, audioUrl: string, videoId:
           const { data: publicUrlData } = supabase.storage
             .from("media")
             .getPublicUrl(audioPathInStorage);
-  
-          
-  
+    
           // Delete the audio file from sample bucket
           // Extract the file name from the URL for removal from the 'sample' bucket
           const urlParts = audioUrl.split('/');
@@ -75,8 +74,7 @@ export async function moveSupabaseFile(title: string, audioUrl: string, videoId:
                   .remove([tempFileName]);
           }
 
-          return publicUrlData.publicUrl
-  
+          return publicUrlData.publicUrl 
 }
 
 export const prefetchImages = async (imageArray: any[]) => {

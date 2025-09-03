@@ -12,7 +12,7 @@ export const QueueVideo = async (videoId: any) => {
   const active = await convex.query(api.videoData.getActiveRenders, {});
     if (active.length < 2) {
       // Nothing rendering → start processing the queue
-      await GenerateVideo();
+     await GenerateVideo();
   }
 
   return { ok: true };
@@ -52,6 +52,7 @@ export const GenerateVideo =  async() => {
               captionJson: nextVideo.captionJson,
               images: prefetchedImages,
               caption: nextVideo.caption,
+              musicUrl: nextVideo.musicTrack?.url, // Pass music URL to Remotion
             },
           },
           codec: "h264",
@@ -65,11 +66,15 @@ export const GenerateVideo =  async() => {
             },
             webhookProgressInterval: 0.05, // Add this back as it was in the user's original code
           },
+          downloadBehavior: {
+            type: "download",
+            fileName: `${nextVideo.title}.mp4`,
+          }
         }).catch(async (error) => {
           console.error("Error rendering video:", error);
           await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
                   recordId: nextVideo._id,
-                  status: "Failed",
+                  status: "Render Failed",
                   comments: `Rendering video failed: ${error.message}`
                 });
           throw new Error(`Error rendering video: ${error.message}`);
@@ -77,4 +82,3 @@ export const GenerateVideo =  async() => {
 
         return "Video is being rendered";
 };
-

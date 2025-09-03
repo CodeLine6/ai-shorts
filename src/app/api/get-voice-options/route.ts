@@ -6,7 +6,8 @@ export async function GET() {
   
   try {
   const availableVoices = await client.voices.search({
-    includeTotalCount: true
+    includeTotalCount: true,
+    voiceType: "default",
   });
 
   
@@ -15,7 +16,7 @@ export async function GET() {
     voices: availableVoices.voices.map((voice) => ({
         voiceId: voice.voiceId,
         name: voice.name,
-        previewUrl: voice.previewUrl,
+        url: voice.previewUrl,
         accent: voice.labels?.accent,
         gender: voice.labels?.gender,
         age: voice.labels?.age,

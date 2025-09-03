@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
 import { Loader2, SparkleIcon, Pencil, Plus, X } from "lucide-react";

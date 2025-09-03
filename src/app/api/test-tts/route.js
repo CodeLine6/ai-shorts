@@ -1,3 +1,4 @@
+import { QueueVideo } from '@/actions/generateVideo';
 import { a4fClient } from '@/config/AiModal';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
@@ -35,7 +36,7 @@ export async function GET(req, res) {
     }); */
     
     // get prompt from search parameter
-    const prompt = req.nextUrl.searchParams.get('prompt');
+    /* const prompt = req.nextUrl.searchParams.get('prompt');
 
     const fluxReq = await a4fClient.images.generate({
                       model: "provider-3/FLUX.1-schnell",
@@ -54,7 +55,12 @@ export async function GET(req, res) {
                     'Content-Type': 'image/png',
                     'Content-Length': imageBuffer.length.toString(),
                   },
-                });
+                }); */
+
+      const id = req.nextUrl.searchParams.get('id');
+      const result = await QueueVideo(id);
+
+      return Response.json(result);
 
   } catch (error) {
     console.error('ElevenLabs API Error:', error);

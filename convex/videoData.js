@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 // ✅ Create new video record
 export const CreateVideoData = mutation({
@@ -13,6 +14,7 @@ export const CreateVideoData = mutation({
             voiceId: v.string(),
             name: v.string(),
         })),
+        musicTrack: v.optional(v.object({ name: v.string(), url: v.string() })),
         images: v.optional(v.any()),
         audioUrl: v.optional(v.string()),
         captionJson: v.optional(v.any()),
@@ -24,13 +26,8 @@ export const CreateVideoData = mutation({
             ...args,
             status: "Pending",
             renderProgress: 0,
-            comments: null,
-            downloadUrl: null,
-            queuedAt: null,
-            renderStartedAt: null,
-            renderId: null,
-            bucketName: null,
             createdAt: new Date().toISOString(),
+            trashed: false,
         });
     },
 });
@@ -140,8 +137,10 @@ export const UpdateVideoRecord = mutation(
             images: v.optional(v.array(v.object({ image: v.string(), start: v.number(), duration: v.number() }))),
             script: v.optional(v.string()), status: v.optional(v.string()),
             captionJson: v.optional(v.any()), downloadUrl: v.optional(v.string()),
-            renderProgress: v.optional(v.number())
-        }, // Added missing closing brace 
+            renderProgress: v.optional(v.number()),
+            trashed: v.optional(v.boolean()),
+            musicTrack: v.optional(v.object({ name: v.string(), url: v.string() })),
+        },
         handler: async ({ db }, args) => {
             // Build update object with only provided fields 
             const updateData = {};
@@ -165,7 +164,14 @@ export const UpdateVideoRecord = mutation(
             }
             if (args.renderProgress !== undefined) {
                 updateData.renderProgress = args.renderProgress;
-            } // Single patch operation 
+            }
+            if (args.trashed !== undefined) {
+                updateData.trashed = args.trashed;
+            }
+            if (args.musicTrack !== undefined) {
+                updateData.musicTrack = args.musicTrack;
+            }
+            // Single patch operation 
             const result = await db.patch(args.recordId, updateData);
             return result;
         }
@@ -182,10 +188,21 @@ export const GetUsersVideo = query(
     {
         args: { uid: v.id('users') },
         handler: async ({ db }, args) => {
-            const result = await db.query('videoData').filter(q => q.eq(q.field('uid'), args.uid))
+            const result = await db.query('videoData').filter(q => q.eq(q.field('uid'), args.uid)).filter(q => q.eq(q.field('trashed'), false))
                 .order('desc')
                 .collect();
 
             return result
         }
     })
+
+export const trashVid = mutation({
+    args: { recordId: v.id('videoData') },
+    handler: async (ctx, args) => {
+        const result = await ctx.runMutation(api.videoData.UpdateVideoRecord, {
+            recordId: args.recordId,
+            trashed: true
+        });
+        return result
+    }
+})

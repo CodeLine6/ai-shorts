@@ -47,7 +47,7 @@ export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
                         return { url: fileUrl, fileName: file.name }
                     });
                     
-                    console.log('File uploaded successfully:', fileUrl);
+                    console.log('File uploaded/updated successfully:', fileUrl);
                 }
             }
 
@@ -76,6 +76,7 @@ export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
                 retryDelays: [0, 3000, 5000, 10000, 20000],
                 headers: {
                     authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY}`,
+                    "x-upsert": "true", // This header enables overwriting existing files
                 },
                 uploadDataDuringCreation: true,
                 removeFingerprintOnSuccess: true,
@@ -89,6 +90,7 @@ export const useUppyWithSupabase = ({ bucketName }: { bucketName: string }) => {
                 ],
                 onError: (error) => console.error("Upload error:", error),
             }).on("file-added", (file) => {
+                console.log(`Attempting to upload/update file: ${file.name} with x-upsert: true`);
                 file.meta = {
                     ...file.meta,
                     bucketName,
