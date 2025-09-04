@@ -1,10 +1,10 @@
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../convex/_generated/api";
-import {GenerateVideo} from "@/actions/generateVideo";
 
 export async function POST(request: Request) {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  
   try {
     const payload = await request.json();
     console.log("Received Remotion webhook payload:", payload);
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     // Handle completion (progress === 1)
     const downloadUrl = `https://storage.googleapis.com/remotioncloudrun-wdehybeugz/renders/${payload.renderId}/out.mp4`;
-    
+        
     await convex.mutation(api.videoData.UpdateVideoRecord, {
       recordId: payload.recordId,
       status: "Completed",
@@ -38,10 +38,22 @@ export async function POST(request: Request) {
       renderProgress: 100
     });
 
-    await GenerateVideo();
+    // Trigger processing of next video in queue
+    try {
+      const siteUrl = process.env.NEXTAUTH_URL || process.env.URL;
+      fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-netlify-trigger': process.env.NETLIFY_TRIGGER_SECRET || 'internal'
+        }
+      }).catch(console.error); // Fire and forget
+    } catch (e) {
+      console.error("Failed to trigger next video processing:", e);
+    }
 
     return NextResponse.json({ message: "Webhook received - render completed" }, { status: 200 });
-    
+      
   } catch (error) {
     console.error("Error processing Remotion webhook:", error);
     return NextResponse.json({ error: "Failed to process webhook" }, { status: 500 });

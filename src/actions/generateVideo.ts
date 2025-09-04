@@ -1,94 +1,36 @@
+
+
 "use server"
 
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
-import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
-import { prefetchImages } from "@/lib/utils";
 
 export const QueueVideo = async (videoId: any) => {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-  await convex.mutation(api.videoData.queueVideo, { videoId });
+  
+  try {
+    // Queue the video
+    await convex.mutation(api.videoData.queueVideo, { videoId });
 
-  const active = await convex.query(api.videoData.getActiveRenders, {});
+    // Check if we should start processing
+    const active = await convex.query(api.videoData.getActiveRenders);
     if (active.length < 2) {
-      // Nothing rendering → start processing the queue
-     await GenerateVideo();
+      // Trigger background processing
+      const siteUrl = process.env.NEXTAUTH_URL || process.env.URL;
+      fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-netlify-trigger': process.env.NETLIFY_TRIGGER_SECRET || 'internal'
+        }
+      })
+      console.log("Background processing triggered");
+    }
+
+    return { ok: true, message: "Video queued" };
+
+  } catch (error) {
+    console.error("Error queueing video:", error);
+    return { ok: false, error: error.message };
   }
-
-  return { ok: true };
-};
-
-export const GenerateVideo =  async() => {
-      const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-      
-      const nextVideo = await convex.query(api.videoData.getNextQueuedVideo, {});
-      if (!nextVideo) {
-          return { message: "Queue is empty" };
-      }
-
-      try {
-      await convex.mutation(api.videoData.startRendering, {
-        videoId: nextVideo._id,
-      });
-
-        const services = await getServices({
-          region: "us-east1",
-          compatibleOnly: true,
-        });
-
-        const serviceName = services[0].serviceName;
-
-        const prefetchedImages = await prefetchImages(nextVideo.images);
-
-        const renderVideo = renderMediaOnCloudrun({
-          serviceName,
-          region: "us-east1",
-          serveUrl: process.env.GCP_SERVE_URL!, // Assert non-null
-          composition: "youtubeShort",
-          inputProps: {
-            videoData: {
-              // @ts-ignore
-              audioUrl: nextVideo.audioUrl, // Use Supabase URL
-              captionJson: nextVideo.captionJson,
-              images: prefetchedImages,
-              caption: nextVideo.caption,
-              musicUrl: nextVideo.musicTrack?.url, // Pass music URL to Remotion
-            },
-          },
-          codec: "h264",
-          renderStatusWebhook: {
-            url: `${process.env.NEXTAUTH_URL}/api/remotion-webhook`, // Point to the new API route
-            headers: {
-              "Content-Type": "application/json",
-            },
-            data: {
-              recordId: nextVideo._id, // Pass recordId to the webhook
-            },
-            webhookProgressInterval: 0.05, // Add this back as it was in the user's original code
-          },
-          downloadBehavior: {
-            type: "download",
-            fileName: `${nextVideo.title}.mp4`,
-          }
-        }).catch(async (error) => {
-          console.error("Error rendering video:", error);
-          await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
-                  recordId: nextVideo._id,
-                  status: "Render Failed",
-                  comments: `Rendering video failed: ${error.message}`
-                });
-          throw new Error(`Error rendering video: ${error.message}`);
-        });
-
-      } catch (error) {
-          console.error("Error rendering video 2:", error);
-          await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
-                  recordId: nextVideo._id,
-                  status: "Render Failed",
-                  comments: `Rendering video failed: ${error.message}`
-          });
-      }
-
-        return "Video is being rendered";
 };

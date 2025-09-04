@@ -1,6 +1,15 @@
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = ".next"
+
+[functions]
+  external_node_modules = ["@remotion/cloudrun", "convex"]
+  included_files = ["convex/_generated/**", "convex/**", "src/**"]
+  node_bundler = "esbuild"
+
 [[plugins]]
 package = "netlify-plugin-inngest"
-
-  [plugins.inputs]
-    host = "https://aishorts.instantmarket.ing/"
-    path = "/api/inngest"
+[plugins.inputs]
+host = "https://aishorts.instantmarket.ing/"
+path = "/api/inngest"
