@@ -1,6 +1,6 @@
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@/../convex/_generated/api";
 
 export async function POST(request: Request) {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);

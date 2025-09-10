@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import { paginationOptsValidator } from "convex/server";
 
 // ✅ Create new video record
 export const CreateVideoData = mutation({
@@ -186,11 +187,10 @@ export const GetVideoRecord = query({
 
 export const GetUsersVideo = query(
     {
-        args: { uid: v.id('users') },
+        args: { uid: v.id('users'), paginationOpts:paginationOptsValidator },
         handler: async ({ db }, args) => {
             const result = await db.query('videoData').filter(q => q.eq(q.field('uid'), args.uid)).filter(q => q.eq(q.field('trashed'), false))
-                .order('desc')
-                .collect();
+                .order('desc').paginate(args.paginationOpts);
 
             return result
         }

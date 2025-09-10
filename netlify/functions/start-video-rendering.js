@@ -2,7 +2,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { getServices, renderMediaOnCloudrun } from "@remotion/cloudrun/client";
 
 // Import the generated API
-import { api } from "../../convex/_generated/api.js";
+import { api } from "@/../convex/_generated/api.js";
 
 // Helper function for retries
 async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
@@ -77,7 +77,7 @@ export const handler = async (event, context) => {
 
     let prefetchedImages = nextVideo.images;
     try {
-      const { prefetchImages } = await import("../../src/lib/utils.js");
+      const { prefetchImages } = await import("@/../src/lib/utils.js");
       prefetchedImages = await prefetchImages(nextVideo.images);
     } catch (e) {
       console.log("Using original images, prefetch not available");

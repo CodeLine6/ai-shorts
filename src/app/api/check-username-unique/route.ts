@@ -1,7 +1,7 @@
 //import { PrismaClient } from "@prisma/client"
 import {z} from "zod";
 import { userNameValidation } from "@/schemas/userSchema";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@/../convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
 // Ensure route is always dynamic and never cached

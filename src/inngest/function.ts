@@ -4,8 +4,8 @@ import axios from "axios";
 import supabase from "@/lib/supabase"; // Import Supabase client
 import { gemini, config, model, a4fClient } from "@/config/AiModal";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../convex/_generated/api";
-import { utterance } from "../../convex/schema";
+import { api } from "@/../convex/_generated/api";
+import { utterance } from "@/../convex/schema";
 import { FailureEventArgs } from "inngest";
 import { QueueVideo} from "@/actions/generateVideo";
 

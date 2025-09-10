@@ -4,7 +4,7 @@ import { useMutation } from 'convex/react';
 import { CircleDollarSign } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import React from 'react'
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@/../../convex/_generated/api';
 import { useToast } from '@/hooks/use-toast';
 
 export const creditPlans = [

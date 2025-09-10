@@ -9,7 +9,7 @@ import { Loader2Icon, WandSparkles } from "lucide-react";
 import Preview from "./_components/Preview";
 import axios from "axios";
 import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@/../convex/_generated/api";
 import { useSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";

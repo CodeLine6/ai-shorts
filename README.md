@@ -20,6 +20,9 @@ An intelligent video creation platform that automatically generates engaging sho
 - **🔐 User Authentication**: Secure user management with verification
 - **💰 Payment Integration**: PayPal integration for credit purchases
 - **📊 Dashboard**: Intuitive interface for managing videos and account
+- **🎶 Background Music Selection**: Choose from a variety of background music tracks to enhance your videos.
+- **🛡️ Admin Dashboard**: Comprehensive dashboard for managing users, videos, referrals, and revenue.
+- **🤝 Referral System**: Earn rewards by referring new users to the platform.
 
 ## 🛠 Tech Stack
 
@@ -29,6 +32,7 @@ An intelligent video creation platform that automatically generates engaging sho
 - **Tailwind CSS** - Utility-first styling
 - **Shadcn/UI** - Modern component library
 - **React Hook Form** - Form management
+- **Zod** - Schema validation
 
 ### Backend & Database
 - **Convex** - Real-time database and backend-as-a-service
@@ -38,6 +42,7 @@ An intelligent video creation platform that automatically generates engaging sho
 ### AI & Media Processing
 - **Google Gemini AI** - Script generation
 - **OpenAI API** - Additional AI capabilities
+- **A4F** - Additional AI capabilities
 - **ElevenLabs** - Text-to-speech synthesis
 - **Remotion** - Programmatic video creation
 - **Google Cloud Run** - Video rendering infrastructure
@@ -60,7 +65,9 @@ Before you begin, ensure you have the following:
   - Supabase
   - PayPal
   - Resend
-  - Convex
+  - Convex (can be self-hosted or cloud-based)
+  - A4F
+  - Netlify Trigger Secret
 
 ## ⚙️ Installation
 
@@ -80,22 +87,29 @@ Before you begin, ensure you have the following:
    Create a `.env.local` file in the root directory and add the following variables:
 
    ```env
-   # Convex Database
-   NEXT_PUBLIC_CONVEX_URL=your_convex_url
-   CONVEX_DEPLOYMENT=your_convex_deployment
+   # Convex Database (Choose one: self-hosted or cloud-based)
+   # For self-hosted:
+   CONVEX_SELF_HOSTED_URL=http://127.0.0.1:3210
+   CONVEX_SELF_HOSTED_ADMIN_KEY=your_convex_self_hosted_admin_key
+   NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
+   # For cloud-based:
+   # NEXT_PUBLIC_CONVEX_URL=your_convex_cloud_url
+   # CONVEX_DEPLOYMENT=your_convex_deployment
 
    # Authentication
    NEXTAUTH_SECRET=your_nextauth_secret
-   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_URL=http://localhost:3000 # Or your production URL
 
    # Supabase
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_key
+   NEXT_PUBLIC_SUPABASE_STORAGE_URL=your_supabase_storage_url
+   NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
    # AI APIs
    GEMINI_API_KEY=your_gemini_api_key
    ELEVEN_LABS_API_KEY=your_elevenlabs_api_key
    GLADIA_API_KEY=your_gladia_api_key
+   A4F_API_KEY=your_a4f_api_key
 
    # Email Service
    NEXT_PUBLIC_RESEND_API_KEY=your_resend_api_key
@@ -111,9 +125,17 @@ Before you begin, ensure you have the following:
    REMOTION_GCP_PROJECT_ID=your_gcp_project_id
    GCP_SERVICE_URL=your_cloud_run_url
    GCP_SERVE_URL=your_serve_url
+
+   # Netlify
+   NETLIFY_TRIGGER_SECRET=your_netlify_trigger_secret
    ```
 
-4. **Set up Convex database**
+4. **Install Netlify CLI**
+   ```bash
+   npm install netlify-cli -g
+   ```
+
+5. **Set up Convex database**
    ```bash
    npx convex dev
    ```
@@ -163,6 +185,8 @@ Before you begin, ensure you have the following:
 │   ├── lib/                   # Utility libraries
 │   └── schemas/               # Zod validation schemas
 ├── convex/                    # Convex database schema
+├── docs/                      # Project documentation
+├── netlify/                   # Netlify functions and configuration
 ├── remotion/                  # Video generation templates
 └── public/                    # Static assets
 ```
@@ -182,6 +206,20 @@ Before you begin, ensure you have the following:
 - `POST /api/sign-up` - User registration
 - `POST /api/forget-password` - Password reset
 - `POST /api/verify-code` - Email verification
+- `GET /api/check-referral-code` - Check referral code validity
+- `GET /api/check-username-unique` - Check if username is unique
+- `POST /api/update-profile/[username]` - Update user profile
+- `POST /api/update-profile/verify-email` - Verify email for profile updates
+- `POST /api/auth/[...nextauth]` - NextAuth.js authentication routes
+
+## 🛡️ Admin Features
+
+The admin dashboard provides powerful tools for platform management:
+
+- **User Management**: View, edit, and manage user accounts.
+- **Video Oversight**: Monitor generated videos and their status.
+- **Referral Tracking**: Track referral codes and their performance.
+- **Revenue Monitoring**: Keep an eye on credit purchases and overall revenue.
 
 ## 🌐 Deployment
 
@@ -209,6 +247,27 @@ Before you begin, ensure you have the following:
 ### Deploy to Other Platforms
 
 The application can be deployed to any Node.js hosting platform that supports Next.js applications.
+
+### Deploy to Netlify
+
+1.  **Install Netlify CLI** (if not already installed):
+    ```bash
+    npm install netlify-cli -g
+    ```
+2.  **Login to Netlify**:
+    ```bash
+    netlify login
+    ```
+3.  **Configure Netlify**:
+    ```bash
+    netlify init
+    ```
+    Follow the prompts to link your project to a new or existing Netlify site. Ensure the build command is `npm run build` and the publish directory is `out` (or `.next` if not using `next export`).
+4.  **Deploy**:
+    ```bash
+    netlify deploy --prod
+    ```
+    This will deploy your site to production.
 
 ## 🤝 Contributing
 

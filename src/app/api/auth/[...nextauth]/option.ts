@@ -2,7 +2,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
 import type {AuthOptions} from "next-auth"
 import { sendVerificationEmail } from '@/helpers/sendEmailVerifications'
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@/../../convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);

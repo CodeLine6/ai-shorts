@@ -1,7 +1,7 @@
 "use client"
 import RemotionComposition from "@/app/_components/RemotionComposition";
 import { Player } from "@remotion/player";
-import { sentence, utterance } from "../../../../../../convex/schema";
+import { sentence, utterance } from "@/../convex/schema";
 
 const RemotionPlayer = ({ videoData }: { videoData: any }) => {
 const captions: {sentences: sentence[], utterances: utterance[]} = videoData?.captionJson

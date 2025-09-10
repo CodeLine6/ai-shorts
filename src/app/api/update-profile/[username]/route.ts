@@ -3,7 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { GetServerSidePropsContext } from "next";
 import { NextRequest } from "next/server";
 import { ParsedUrlQuery } from 'querystring';
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@/../../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 

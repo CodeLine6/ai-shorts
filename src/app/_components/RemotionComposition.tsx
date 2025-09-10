@@ -5,7 +5,7 @@ import {
   springTiming,
   TransitionSeries,
 } from "@remotion/transitions";
-import { sentence, utterance, word } from '../../../convex/schema'
+import { sentence, utterance, word } from '@/../convex/schema'
 
 import { fade } from "@remotion/transitions/fade";
 

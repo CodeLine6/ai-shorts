@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import RemotionPlayer from '../_components/RemotionPlayer'
 import VIdeoInfo from '../_components/VIdeoInfo'
 import { useConvex } from 'convex/react';
-import { api } from '../../../../../../convex/_generated/api';
+import { api } from  '@/../convex/_generated/api';
 import { useParams } from 'next/navigation';
 import { prefetchImages } from '@/lib/utils';
 

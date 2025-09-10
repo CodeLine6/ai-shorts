@@ -2,8 +2,8 @@
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useQuery } from "convex/react";
-import { Id } from "../../../convex/_generated/dataModel";
-import { api } from "../../../convex/_generated/api";
+import { Id } from "@/../convex/_generated/dataModel";
+import { api } from "@/../convex/_generated/api";
 
 export function SessionUpdater() {
   const { data: session, update } = useSession();

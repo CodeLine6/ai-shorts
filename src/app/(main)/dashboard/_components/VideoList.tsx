@@ -1,153 +1,68 @@
-"use client"
-import { Button } from "@/components/ui/button"
-import { useConvex } from "convex/react"
-import { useSession } from "next-auth/react"
-import Image from "next/image"
-import Link from "next/link"
-import { useEffect, useState } from "react"
-import { api } from "../../../../../convex/_generated/api"
-import moment from "moment"
-import { RefreshCcw, Ban, EllipsisVertical, Trash, RotateCcw } from "lucide-react"
-import { VideoData } from "@/../convex/schema"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, } from "@/components/ui/alert-dialog"
-import { Id } from "@/../convex/_generated/dataModel"
-import { Progress } from "@/components/ui/progress"
-import { toast } from "@/hooks/use-toast";
-import { QueueVideo } from "@/actions/generateVideo"
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/option";
+import { api } from "@/../convex/_generated/api";
+import { VideoData } from "@/../convex/schema";
+import { InfiniteVideoListClient } from "./InfiniteVideoListClient";
+import { ConvexHttpClient } from "convex/browser"; // Import ConvexHttpClient
+import { Id } from "@/../convex/_generated/dataModel"; // Import Id
 
+export const dynamic = "force-dynamic";
 
-const RenderProgress = ({status,progress} : {status: string,progress: number}) => {
-  if(status == 'Completed') return null
-  return (      
-         <div className="w-3/4 text-center">
-                  <p className="mb-2">Rendering</p>
-                  <div className="w-3/4 mx-auto"><Progress value={progress}  /></div>
-          </div>        
-      )
-}
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!); // Create Convex client instance
 
-const VideoStatus = ({status,progress} : {status: string,progress: number}) => {
-  if(status == 'Completed') return null
-  return (
-    <div className={`absolute top-0 left-0 w-full h-full ${status.includes('Failed') ? 'bg-red-900' : 'bg-black'} bg-opacity-80 flex items-center justify-center gap-2`}>
-      {status.includes('Failed') ?
-            <>
-              <Ban />
-              <h2>Failed</h2>
-            </>
+// This is a server component
+const VideoList = async () => {
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
 
-        :  status == "Rendering" ?  <RenderProgress status={status} progress={progress} />
-        :
-          <>
-            <RefreshCcw className="animate-spin" />
-            <h2>{status}</h2>
-          </>
-      }
-    </div>
-  )
-}
+  let initialVideos: VideoData[] = [];
+  let initialCursor: string | null = null;
+  let isDone: boolean = true;
 
-const VideoItem = ({ video, index }: { video: VideoData, index: number }) => {
-  const convex = useConvex();
-  const handleRegenerate = async () => {
-    await QueueVideo(video._id) 
-    toast({
-      title: "Video Queued",
-      description: "Video successfully added to the render queue.",
-    })
+  if (user?._id) {
+    const result = await convex.query(api.videoData.GetUsersVideo, {
+      uid: user._id as Id<"users">,
+      paginationOpts: {
+        numItems: 10, // Initial load
+        cursor: null,
+      },
+    });
+    initialVideos = result.page;
+    initialCursor = result.continueCursor;
+    isDone = result.isDone;
   }
-  return (
-    <Link href={`/dashboard/play-video/${video?._id}`} key={index}>
-      <div className="relative aspect-[2/3] rounded-md overflow-hidden" key={index}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button className="absolute top-2 right-2 rounded-full pl-[13px] pr-[12px] hover:bg-gray-800 hover:bg-opacity-50 z-10" variant={"ghost"} ><EllipsisVertical /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem onSelect={(e) => { e.preventDefault() }} onClick={(e) => e.target.closest('div[data-state="open"]').style.visibility = 'hidden'}>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <div className="flex items-center w-full cursor-pointer">
-                    <Trash className="mr-2" width={20} /> Delete
-                  </div>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the video.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={async () => await convex.mutation(api.videoData.trashVid, { recordId: video?._id as Id<"videoData"> })}>Continue</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuItem>
-            {video?.status == "Render Failed" &&
-            <DropdownMenuItem className="cursor-pointer" onClick={handleRegenerate}><RotateCcw /> Retry</DropdownMenuItem>}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {video?.images?.[0].image &&<Image
-                src={video?.images[0].image}
-                width={500}
-                height={500}
-                alt={video?.title}
-                className="w-full object-cover rounded-xl aspect-[2/3]"
-        />}
-        <VideoStatus status={video?.status} progress={video?.renderProgress} />
+  
+  // This function will be passed to the client component to fetch more videos
+  // It needs to be a server action or a function that can be called from the client
+  // For now, we'll define it here and assume it can be passed.
+  // In a real Next.js app, you might create a separate server action for this.
+  const fetchMoreVideos = async (cursor: string | null) => {
+    "use server"; // This makes it a server action
 
-        <div className="absolute bottom-1 text-center w-full">
-          <h2>{video?.title}</h2>
-          <h2 className="text-sm">{moment(video?._creationTime).fromNow()}</h2>
-        </div>
-      </div>
-    </Link>
-  )
-}
+    const session = await getServerSession(authOptions);
+    const user = session?.user;
 
-function VideoList() {
-  const [videoList, setVideoList] = useState<VideoData[]>([])
-  const convex = useConvex();
-  const session = useSession();
-  const user = session.data?.user
+    if (!user?._id) {
+      return { page: [], cursor: null, done: true };
+    }
 
-  useEffect(() => {
-    user && GetUserVideoList()
-  }, [user])
-
-  const GetUserVideoList = async () => {
-    // All user videos
-    const userVideoList = await convex.query(api.videoData.GetUsersVideo, {
-      //@ts-ignore
-      uid: user._id,
-    })
-
-    setVideoList(userVideoList as VideoData[])
-  }
+    const { continueCursor, isDone, page } = await convex.query(api.videoData.GetUsersVideo, {
+      uid: user._id as Id<"users">,
+      paginationOpts: {
+        numItems: cursor ? 5 : 10, // Subsequent loads
+        cursor,
+      },
+    });
+    return { page, cursor: continueCursor, done: isDone };
+  };
 
   return (
     <div>
-      {videoList.length == 0 ?
-        <div className="flex flex-col items-center justify-center mt-28 gap-5 p-5 py-16 border border-dashed rounded-xl">
-          <Image src={'/logo.svg'} alt="logo" width={60} height={60} />
-          <h2 className="text-gray-400 text-lg">You don't have any videos</h2>
-          <Link href={'/dashboard/create-new-video'}>
-            <Button>+ Create New Video</Button>
-          </Link>
-        </div> :
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mt-10">
-          {/* @ts-ignore */}
-          {videoList?.map((video, index) => (
-            <VideoItem video={video} index={index} />
-          ))}
-        </div>
-
-      }
+      <InfiniteVideoListClient
+        initialVideos={initialVideos}
+        fetchMoreVideos={fetchMoreVideos}      />
     </div>
-  )
-}
+  );
+};
 
-export default VideoList
+export default VideoList;

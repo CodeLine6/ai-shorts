@@ -84,27 +84,33 @@ export default defineSchema(
 export interface VideoData {
   _id: string;
   title: string;
-  topic: string;
-  script: string;
+  topic?: string; // Made optional
+  script?: string; // Made optional
   videoStyle: string;
   caption: any;
-  voice: {
+  voice?: { // Made optional
     voiceId: string;
     name: string;
   };
-  musicTrack: {
+  musicTrack?: { // Made optional
     name: string;
     url: string;
   };
-  images: any;
-  audioUrl: string;
-  captionJson: any;
+  images?: any; // Made optional
+  audioUrl?: string; // Made optional
+  captionJson?: any; // Made optional
   uid: string;
   createdBy: string;
-  status: string;
-  renderProgress: number;
-  comments: any;
-  downloadUrl: string;
+  status?: string; // Made optional
+  renderProgress?: number; // Made optional
+  comments?: any; // Made optional
+  downloadUrl?: string; // Made optional
+  queuedAt?: string; // Added and made optional
+  renderStartedAt?: string; // Added and made optional
+  renderId?: string; // Added and made optional
+  bucketName?: string | null; // Added and made optional
+  trashed?: boolean; // Added and made optional
+  createdAt?: string; // Added and made optional
   _creationTime: number;
 }
 
