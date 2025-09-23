@@ -243,17 +243,15 @@ export const GenerateVideoData = inngest.createFunction(
           try {
             console.log(`Generating image ${index + 1} with Gemini:`, prompt.imagePrompt);
 
-            const imagenRequest = await gemini.models.generateImages({
-              model: 'models/imagen-4.0-generate-preview-06-06',
-              prompt: prompt.imagePrompt + " Do not add any text anywhere in the image where it should not be present",
-              config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/jpeg',
-                aspectRatio: '9:16',
-              },
-            });
+            const imagenRequest = await a4fClient.images.generate({
+              model: 'provider-4/imagen-4',
+              prompt: prompt.imagePrompt,
+              response_format: 'b64_json',
+              output_compression: 50,
+               size: "1024x1792",
+            })
 
-            base64 = imagenRequest.generatedImages?.[0]?.image?.imageBytes;
+            base64 = imagenRequest.data?.[0]?.b64_json
           } catch (error) {
             console.error(`Gemini failed for image ${index + 1}:`, error);
             geminiError = true;
@@ -272,7 +270,7 @@ export const GenerateVideoData = inngest.createFunction(
               }
 
               const fluxReq = await a4fClient.images.generate({
-                model: "provider-6/sana-1.5-flash",
+                model: "provider-4/qwen-image",
                 prompt: fluxPrompt,
                 response_format: "b64_json",
                 output_compression: 50,
@@ -394,6 +392,7 @@ export const GenerateVideoData = inngest.createFunction(
           },
           images: ImageObject,
           script: GenerateCaptions.result.transcription.full_transcript,
+          status: "Ready",
         });
       }
       catch (error: any) {
