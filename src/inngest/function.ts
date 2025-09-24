@@ -1,4 +1,4 @@
-import { pollForResult} from "@/lib/utils";
+import { pollForResult } from "@/lib/utils";
 import { inngest } from "./client";
 import axios from "axios";
 import supabase from "@/lib/supabase"; // Import Supabase client
@@ -7,7 +7,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { utterance } from "@/../convex/schema";
 import { FailureEventArgs } from "inngest";
-import { QueueVideo} from "@/actions/generateVideo";
+import { QueueVideo } from "@/actions/generateVideo";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
@@ -114,7 +114,7 @@ export const GenerateVideoData = inngest.createFunction(
           });
 
         if (uploadError) {
-          console.error("Supabase upload error:", uploadError);
+          console.log("Supabase upload error:", uploadError);
 
           throw new Error(`Supabase upload error: ${uploadError.message}`);
         }
@@ -129,7 +129,7 @@ export const GenerateVideoData = inngest.createFunction(
         };
 
       } catch (error) {
-        console.error("ElevenLabs API error:", error);
+        console.log("ElevenLabs API error:", error);
 
         throw new Error(`ElevenLabs API error: ${error.message}`);
       }
@@ -237,63 +237,89 @@ export const GenerateVideoData = inngest.createFunction(
       images_buffer = await Promise.all(
         GenerateImagePrompt.map(async (prompt: { imagePrompt: string; sceneContent: string }, index: number) => {
           let base64;
-          let geminiError = false;
+          let imagen4Error = false;
+          let imagen3Error = false;
 
-          // Try Gemini first
+          // Try Imagen 4 first
           try {
-            console.log(`Generating image ${index + 1} with Gemini:`, prompt.imagePrompt);
+            console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
 
-            const imagenRequest = await a4fClient.images.generate({
-              model: 'provider-4/imagen-4',
+            const imagen4Request = await a4fClient.images.generate({
+              model: "provider-4/imagen-4",
               prompt: prompt.imagePrompt,
-              response_format: 'b64_json',
+              response_format: "b64_json",
               output_compression: 50,
-               size: "1024x1792",
+              size: "1024x1792",
             })
 
-            base64 = imagenRequest.data?.[0]?.b64_json
+            base64 = imagen4Request.data?.[0]?.b64_json
           } catch (error) {
-            console.error(`Gemini failed for image ${index + 1}:`, error);
-            geminiError = true;
+            console.log(`Imagen 4 failed for image ${index + 1}:`, error);
+            imagen4Error = true;
           }
 
-          // Fallback to FLUX if Gemini fails
-          if (!base64 || geminiError) {
+          // Fallback to Imagen 3 if Imagen 4 fails
+
+          if (!base64 || imagen4Error) {
             try {
-              console.log(`Falling back to FLUX for image ${index + 1}:`, prompt.imagePrompt);
+              console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
 
-              // Validate prompt length (common cause of 400 errors)
-              let fluxPrompt = prompt.imagePrompt + " Do not add any text anywhere in the image where it should not be present";
-              if (fluxPrompt.length > 1000) { // Adjust limit as needed
-                console.warn(`Prompt too long (${fluxPrompt.length} chars), truncating`);
-                fluxPrompt = fluxPrompt.substring(0, 1000);
-              }
-
-              const fluxReq = await a4fClient.images.generate({
-                model: "provider-4/qwen-image",
-                prompt: fluxPrompt,
+              const imagen3Request = await a4fClient.images.generate({
+                model: "provider-4/imagen-3",
+                prompt: prompt.imagePrompt,
                 response_format: "b64_json",
                 output_compression: 50,
                 size: "1024x1792",
               });
 
-              base64 = fluxReq.data?.[0]?.b64_json;
+              base64 = imagen3Request.data?.[0]?.b64_json;
 
               if (!base64) {
-                throw new Error("FLUX API returned no image data");
+                throw new Error("Imagen 3 API returned no image data");
               }
-            } catch (fluxError: any) {
-              console.error(`FLUX also failed for image ${index + 1}:`, fluxError);
+            } catch (err: any) {
+              console.log(`Imagen 3 also failed for image ${index + 1}:`, err)
+              imagen3Error = true
+            }
+          }
+
+          if (!base64 || imagen3Error) {
+            try {
+              console.log(`Falling back to Stability ai for image ${index + 1}:`, prompt.imagePrompt);
+
+
+              const stabilityAIRequest = await fetch("https://free-image-generation-api.abhimanyutokas.workers.dev/", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${process.env.STABILITY_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                  prompt: prompt.imagePrompt,
+                  width: 1024, 
+                  height: 1792,
+                  negative_prompt: "blurry, low quality, pixelated, distorted, text, watermark, signature, logo, bad anatomy, extra limbs, deformed hands, repetition"
+                 }),
+              });
+
+              const blob = await stabilityAIRequest.blob();
+              base64 = await blob.arrayBuffer();
+
+              if (!base64) {
+                throw new Error("Stability AI API returned no image data");
+              }
+            } catch (stabilityAIErr: any) {
+              console.log(`Stability AI also failed for image ${index + 1}:`, stabilityAIErr);
 
               // Log the full error details
-              console.error("FLUX Error Details:", {
-                message: fluxError.message,
-                status: fluxError.status,
+              console.log("Stability AI Details:", {
+                message: stabilityAIErr.message,
+                status: stabilityAIErr.status,
                 prompt: prompt.imagePrompt,
                 promptLength: prompt.imagePrompt.length
               });
 
-              throw new Error(`Both Gemini and FLUX failed for image ${index + 1}: ${fluxError.message}`);
+              throw new Error(`Imagen 4, 3 and Stability AI failed for image ${index + 1}: ${stabilityAIErr.message}`);
             }
           }
 
@@ -323,7 +349,7 @@ export const GenerateVideoData = inngest.createFunction(
                 });
 
             if (uploadError) {
-              console.error("Supabase image upload error:", uploadError);
+              console.log("Supabase image upload error:", uploadError);
 
               throw new Error(
                 `Supabase image upload error: ${uploadError.message}`
@@ -340,7 +366,7 @@ export const GenerateVideoData = inngest.createFunction(
             };
 
           } catch (error) {
-            console.error("Supabase image upload error:", error);
+            console.log("Supabase image upload error:", error);
             throw new Error(
               `Supabase image upload error: ${error.message}`
             );
@@ -396,7 +422,7 @@ export const GenerateVideoData = inngest.createFunction(
         });
       }
       catch (error: any) {
-        console.error("Error saving to database:", error);
+        console.log("Error saving to database:", error);
         throw new Error(`Error saving to database: ${error.message}`);
       }
     });
@@ -404,7 +430,7 @@ export const GenerateVideoData = inngest.createFunction(
     const InitiateRender = await step.run("InitiateRender", async () => {
       // Put the video in queue
       const result = await QueueVideo(recordId);
-    
+
     });
 
     return InitiateRender// The main function will return the result of RenderVideo step
