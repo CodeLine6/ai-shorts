@@ -83,7 +83,7 @@ export const handler = async (event, context) => {
       console.log("Using original images, prefetch not available");
     }
 
-    await retryWithBackoff(
+    retryWithBackoff(
       () => renderMediaOnCloudrun({
         serviceName,
         region: "us-east1",
@@ -117,6 +117,8 @@ export const handler = async (event, context) => {
       2,
       5000
     );
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     console.log(`Video render initiated for: ${nextVideo._id}`);
     return { 

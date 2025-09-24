@@ -239,29 +239,12 @@ export const GenerateVideoData = inngest.createFunction(
           let imagen4Error = false;
           let imagen3Error = false;
 
-          // Try Imagen 4 first
-          try {
-            console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
+          const preferredModel = process.env.IMAGE_GEN_MODEL || "provider-4/imagen-3";
 
-            const imagen4Request = await a4fClient.images.generate({
-              model: "provider-4/imagen-4",
-              prompt: prompt.imagePrompt,
-              response_format: "b64_json",
-              output_compression: 50,
-              size: "1024x1792",
-            })
-
-            base64 = imagen4Request.data?.[0]?.b64_json
-          } catch (error) {
-            console.log(`Imagen 4 failed for image ${index + 1}:`, error);
-            imagen4Error = true;
-          }
-
-          // Fallback to Imagen 3 if Imagen 3 fails
-
-          if (!base64 || imagen4Error) {
+          // Try preferred model first
+          if (preferredModel === "provider-4/imagen-3") {
             try {
-              console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
+              console.log(`Generating image ${index + 1} with Imagen 3:`, prompt.imagePrompt);
 
               const imagen3Request = await a4fClient.images.generate({
                 model: "provider-4/imagen-3",
@@ -269,20 +252,83 @@ export const GenerateVideoData = inngest.createFunction(
                 response_format: "b64_json",
                 output_compression: 50,
                 size: "1024x1792",
+              })
+
+              base64 = imagen3Request.data?.[0]?.b64_json
+            } catch (error) {
+              console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+              imagen3Error = true;
+            }
+          } else if (preferredModel === "provider-4/imagen-4") {
+            try {
+              console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
+
+              const imagen4Request = await a4fClient.images.generate({
+                model: "provider-4/imagen-4",
+                prompt: prompt.imagePrompt,
+                response_format: "b64_json",
+                output_compression: 50,
+                size: "1024x1792",
               });
 
-              base64 = imagen3Request.data?.[0]?.b64_json;
+              base64 = imagen4Request.data?.[0]?.b64_json;
 
               if (!base64) {
-                throw new Error("Imagen 3 API returned no image data");
+                throw new Error("Imagen 4 API returned no image data");
               }
             } catch (err: any) {
-              console.log(`Imagen 3 also failed for image ${index + 1}:`, err)
-              imagen3Error = true
+              console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
+              imagen4Error = true
             }
           }
 
-          if (!base64 || imagen3Error) {
+          // Fallback to the other model if the preferred model fails
+          if (!base64) {
+            const fallbackModel = preferredModel === "provider-4/imagen-3" ? "provider-4/imagen-4" : "provider-4/imagen-3";
+
+            if (fallbackModel === "provider-4/imagen-4") {
+              try {
+                console.log(`Falling back to Imagen 4 for image ${index + 1}:`, prompt.imagePrompt);
+
+                const imagen4Request = await a4fClient.images.generate({
+                  model: "provider-4/imagen-4",
+                  prompt: prompt.imagePrompt,
+                  response_format: "b64_json",
+                  output_compression: 50,
+                  size: "1024x1792",
+                });
+
+                base64 = imagen4Request.data?.[0]?.b64_json;
+
+                if (!base64) {
+                  throw new Error("Imagen 4 API returned no image data");
+                }
+              } catch (err: any) {
+                console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
+                imagen4Error = true
+              }
+            } else {
+              try {
+                console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
+
+                const imagen3Request = await a4fClient.images.generate({
+                  model: "provider-4/imagen-3",
+                  prompt: prompt.imagePrompt,
+                  response_format: "b64_json",
+                  output_compression: 50,
+                  size: "1024x1792",
+                })
+
+                base64 = imagen3Request.data?.[0]?.b64_json
+              } catch (error) {
+                console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+                imagen3Error = true;
+              }
+            }
+          }
+
+          // Fallback to Stability AI if both Imagen 3 and Imagen 4 fail
+          if (!base64 || imagen4Error || imagen3Error) {
             try {
               console.log(`Falling back to Stability ai for image ${index + 1}:`, prompt.imagePrompt);
 
@@ -324,7 +370,12 @@ export const GenerateVideoData = inngest.createFunction(
           // 🔥 UPLOAD IMMEDIATELY AFTER GENERATION
           const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}-${index}.png`;
           const imagePathInStorage = `${recordId}/images/${imageName}`;
-          const imageBuffer = Buffer.from(base64, "base64");
+          let imageBuffer;
+          if (typeof base64 === "string") {
+            imageBuffer = Buffer.from(base64, "base64");
+          } else {
+            imageBuffer = Buffer.from(new Uint8Array(base64));
+          }
 
           // Upload image to Supabase Storage
           const { data: uploadData, error: uploadError } = await supabase.storage
