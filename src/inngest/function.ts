@@ -232,53 +232,52 @@ export const GenerateVideoData = inngest.createFunction(
         status: "Generating Images"
       });
 
-      let images_buffer = [];
 
-      images_buffer = await Promise.all(
+      const imageResults = await Promise.all(
         GenerateImagePrompt.map(async (prompt: { imagePrompt: string; sceneContent: string }, index: number) => {
-          let base64;
+          let base64 ;
           let imagen4Error = false;
           let imagen3Error = false;
 
-          // Try Imagen 4 first
+          // Try Imagen 3 first
           try {
-            console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
+            console.log(`Generating image ${index + 1} with Imagen 3:`, prompt.imagePrompt);
 
-            const imagen4Request = await a4fClient.images.generate({
-              model: "provider-4/imagen-4",
+            const imagen3Request = await a4fClient.images.generate({
+              model: "provider-4/imagen-3",
               prompt: prompt.imagePrompt,
               response_format: "b64_json",
               output_compression: 50,
               size: "1024x1792",
             })
 
-            base64 = imagen4Request.data?.[0]?.b64_json
+            base64 = imagen3Request.data?.[0]?.b64_json
           } catch (error) {
-            console.log(`Imagen 4 failed for image ${index + 1}:`, error);
+            console.log(`Imagen 3 failed for image ${index + 1}:`, error);
             imagen4Error = true;
           }
 
-          // Fallback to Imagen 3 if Imagen 4 fails
+          // Fallback to Imagen 4 if Imagen 3 fails
 
           if (!base64 || imagen4Error) {
             try {
-              console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
+              console.log(`Falling back to Imagen 4 for image ${index + 1}:`, prompt.imagePrompt);
 
-              const imagen3Request = await a4fClient.images.generate({
-                model: "provider-4/imagen-3",
+              const imagen4Request = await a4fClient.images.generate({
+                model: "provider-4/imagen-4",
                 prompt: prompt.imagePrompt,
                 response_format: "b64_json",
                 output_compression: 50,
                 size: "1024x1792",
               });
 
-              base64 = imagen3Request.data?.[0]?.b64_json;
+              base64 = imagen4Request.data?.[0]?.b64_json;
 
               if (!base64) {
-                throw new Error("Imagen 3 API returned no image data");
+                throw new Error("Imagen 4 API returned no image data");
               }
             } catch (err: any) {
-              console.log(`Imagen 3 also failed for image ${index + 1}:`, err)
+              console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
               imagen3Error = true
             }
           }
@@ -287,19 +286,18 @@ export const GenerateVideoData = inngest.createFunction(
             try {
               console.log(`Falling back to Stability ai for image ${index + 1}:`, prompt.imagePrompt);
 
-
               const stabilityAIRequest = await fetch("https://free-image-generation-api.abhimanyutokas.workers.dev/", {
                 method: "POST",
                 headers: {
                   "Authorization": `Bearer ${process.env.STABILITY_API_KEY}`,
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                   prompt: prompt.imagePrompt,
-                  width: 1024, 
+                  width: 1024,
                   height: 1792,
                   negative_prompt: "blurry, low quality, pixelated, distorted, text, watermark, signature, logo, bad anatomy, extra limbs, deformed hands, repetition"
-                 }),
+                }),
               });
 
               const blob = await stabilityAIRequest.blob();
@@ -323,63 +321,43 @@ export const GenerateVideoData = inngest.createFunction(
             }
           }
 
-          return { base64, ...prompt };
-        })
-      );
-
-      console.log(`Successfully generated ${images_buffer.length} images`);
-      return images_buffer;
-    });
-
-    const UploadToStorage = await step.run("UploadToStorage", async () => {
-      const imagePaths = await Promise.all(
-        GenerateImages.map(async (image, index) => {
+          // 🔥 UPLOAD IMMEDIATELY AFTER GENERATION
           const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}-${index}.png`;
           const imagePathInStorage = `${recordId}/images/${imageName}`;
-          const imageBuffer = Buffer.from(image.base64, "base64");
+          const imageBuffer = Buffer.from(base64, "base64");
 
           // Upload image to Supabase Storage
-          try {
-            const { data: uploadData, error: uploadError } =
-              await supabase.storage
-                .from("media") // Assuming you have a bucket named 'media'
-                .upload(imagePathInStorage, imageBuffer, {
-                  contentType: "image/png",
-                  upsert: false, // Set to true if you want to overwrite existing files
-                });
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("media")
+            .upload(imagePathInStorage, imageBuffer, {
+              contentType: "image/png",
+              upsert: false,
+            });
 
-            if (uploadError) {
-              console.log("Supabase image upload error:", uploadError);
-
-              throw new Error(
-                `Supabase image upload error: ${uploadError.message}`
-              );
-            }
-
-            const { data: publicUrlData } = supabase.storage
-              .from("media")
-              .getPublicUrl(imagePathInStorage);
-
-            return {
-              imageUrl: publicUrlData.publicUrl,
-              sceneContent: image.sceneContent,
-            };
-
-          } catch (error) {
-            console.log("Supabase image upload error:", error);
-            throw new Error(
-              `Supabase image upload error: ${error.message}`
-            );
+          if (uploadError) {
+            throw new Error(`Supabase image upload error: ${uploadError.message}`);
           }
+
+          const { data: publicUrlData } = supabase.storage
+            .from("media")
+            .getPublicUrl(imagePathInStorage);
+
+          // 🔥 RETURN ONLY URLs AND METADATA (much smaller!)
+          return {
+            imageUrl: publicUrlData.publicUrl,
+            sceneContent: prompt.sceneContent,
+          };
         })
       );
 
-      return imagePaths;
+      console.log(`Successfully generated and uploaded ${imageResults.length} images`);
+      return imageResults; // ✅ Only URLs now, much smaller!
     });
+
 
     const ImageObject = await step.run("formatImageObject", async () => {
       const images = await Promise.all(
-        UploadToStorage.map(async ({ imageUrl, sceneContent }, index) => {
+        GenerateImages.map(async ({ imageUrl, sceneContent }, index) => {
           const relatedTranscript =
             GenerateCaptions.result.transcription.utterances.filter(
               ({ text }: utterance) => {
