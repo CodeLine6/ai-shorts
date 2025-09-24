@@ -239,45 +239,45 @@ export const GenerateVideoData = inngest.createFunction(
           let imagen4Error = false;
           let imagen3Error = false;
 
-          // Try Imagen 3 first
+          // Try Imagen 4 first
           try {
-            console.log(`Generating image ${index + 1} with Imagen 3:`, prompt.imagePrompt);
+            console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
 
-            const imagen3Request = await a4fClient.images.generate({
-              model: "provider-4/imagen-3",
+            const imagen4Request = await a4fClient.images.generate({
+              model: "provider-4/imagen-4",
               prompt: prompt.imagePrompt,
               response_format: "b64_json",
               output_compression: 50,
               size: "1024x1792",
             })
 
-            base64 = imagen3Request.data?.[0]?.b64_json
+            base64 = imagen4Request.data?.[0]?.b64_json
           } catch (error) {
-            console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+            console.log(`Imagen 4 failed for image ${index + 1}:`, error);
             imagen4Error = true;
           }
 
-          // Fallback to Imagen 4 if Imagen 3 fails
+          // Fallback to Imagen 3 if Imagen 3 fails
 
           if (!base64 || imagen4Error) {
             try {
-              console.log(`Falling back to Imagen 4 for image ${index + 1}:`, prompt.imagePrompt);
+              console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
 
-              const imagen4Request = await a4fClient.images.generate({
-                model: "provider-4/imagen-4",
+              const imagen3Request = await a4fClient.images.generate({
+                model: "provider-4/imagen-3",
                 prompt: prompt.imagePrompt,
                 response_format: "b64_json",
                 output_compression: 50,
                 size: "1024x1792",
               });
 
-              base64 = imagen4Request.data?.[0]?.b64_json;
+              base64 = imagen3Request.data?.[0]?.b64_json;
 
               if (!base64) {
-                throw new Error("Imagen 4 API returned no image data");
+                throw new Error("Imagen 3 API returned no image data");
               }
             } catch (err: any) {
-              console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
+              console.log(`Imagen 3 also failed for image ${index + 1}:`, err)
               imagen3Error = true
             }
           }

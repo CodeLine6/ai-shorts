@@ -15,9 +15,11 @@ export const QueueVideo = async (videoId: any) => {
     // Check if we should start processing
     const active = await convex.query(api.videoData.getActiveRenders);
     if (active.length < 2) {
+      console.log("Less than 2 active renders");
       // Trigger background processing
       const siteUrl = process.env.NEXTAUTH_URL || process.env.URL;
-      fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
+      console.log("Sending Request to Trigger Function");
+      await fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
