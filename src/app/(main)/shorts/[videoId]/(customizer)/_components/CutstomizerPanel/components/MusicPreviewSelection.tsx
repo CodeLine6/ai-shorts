@@ -2,19 +2,17 @@
 
 import React, { useState, useRef } from "react";
 import { musicTracks } from "@/config/musicTracks";
-import { AudioItem, FormState } from "../types";
-import AudioList from './AudioList'; // New import
+import { AudioItem } from "@/app/(main)/(default)/create-new-video/types";
+import AudioList from '@/app/(main)/(default)/create-new-video/_components/AudioList'; // New import
 
-interface MusicPreviewSelectionProps {
-  onHandleInputChange: (fieldName: keyof FormState, fieldValue: any) => void;
-  errors: string[];
-}
 
 function MusicPreviewSelection({
   onHandleInputChange,
-  errors,
-}: MusicPreviewSelectionProps) {
+}: {
+  onHandleInputChange: (fieldName: string, fieldValue: any) => void;
+}) {
   const [currentPlayingTrackUrl, setCurrentPlayingTrackUrl] = useState<string | null>(null);
+  
   const [selectedMusicTrackUrl, setSelectedMusicTrackUrl] = useState<string | null>(null); // Renamed from selectedMusicTrackName
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -42,11 +40,11 @@ function MusicPreviewSelection({
   };
 
   return (
-    <div className="mt-5">
-      <h2 className={`${errors.length > 0 && 'text-red-500'}`}>Background Music</h2>
+    <>
+      
       <AudioList<AudioItem>
           items={musicTracks}
-          errors={errors}
+          errors={[]}
           selectedItemId={selectedMusicTrackUrl}
           onSelectItem={handleTrackSelect}
           onPlayPause={handleTrackPlayPause}
@@ -54,11 +52,9 @@ function MusicPreviewSelection({
           getItemKey={(item) => item.url}
           getItemName={(item) => item.name}
       />
-      {errors.length > 0 && (
-        <p className="text-red-500 text-sm mt-1">{errors[0]}</p>
-      )}
+      
       <audio ref={audioRef} onEnded={() => setCurrentPlayingTrackUrl(null)} />
-    </div>
+    </>
   );
 }
 

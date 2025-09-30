@@ -41,7 +41,6 @@ export interface FormState {
     audioUrl: FormField<string | undefined>;
     videoStyle: FormField<string>;
     captionStyle: FormField<CaptionConfig | undefined>;
-    musicTrack: FormField<AudioItem | undefined>;
 }
 
 export interface FormAction {

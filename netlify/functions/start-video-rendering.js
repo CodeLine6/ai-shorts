@@ -96,6 +96,7 @@ export const handler = async (event, context) => {
             images: prefetchedImages,
             caption: nextVideo.caption,
             musicTrack: nextVideo.musicTrack,
+            config: nextVideo.config
           },
         },
         codec: "h264",

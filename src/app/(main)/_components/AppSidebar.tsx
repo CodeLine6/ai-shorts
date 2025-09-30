@@ -23,12 +23,12 @@ const MenuItems = [
     {
         label: 'Billing',
         icon: WalletCards,
-        link: '/dashboard/billing'
+        link: '/billing'
     },
     {
         label: 'Referrals',
         icon: Users,
-        link: '/dashboard/referrals'
+        link: '/referrals'
     }
 ]
 
@@ -37,6 +37,7 @@ function AppSidebar() {
   const { data: session, status } = useSession()
   const user = session?.user
   return (
+    <aside>
      <Sidebar>
       <SidebarHeader>
         <div>
@@ -53,7 +54,7 @@ function AppSidebar() {
         <SidebarGroup />
             <SidebarGroupContent>
                 <div className='mx-5 mt-8'>
-                    <Link href={user?.credits ? `/dashboard/create-new-video` : ``} onClick={user?.credits ? () => {} : () => {
+                    <Link href={user?.credits ? `/create-new-video` : ``} onClick={user?.credits ? () => {} : () => {
                         toast({
                             title: 'Error',
                             description: 'You need to buy more credits to create a video',
@@ -83,10 +84,11 @@ function AppSidebar() {
                 <Gem className='text-gray-400'/>
                 <h2 className='text-gray-400'>{user && user.credits} {user && user.credits === 1 ? "Credit" : "Credits"}</h2>
             </div>
-            <Link href={'/dashboard/billing'}><Button className='w-full mt-3'>Buy More Credits</Button></Link>
+            <Link href={'/billing'}><Button className='w-full mt-3'>Buy More Credits</Button></Link>
          </div>
       </SidebarFooter>
     </Sidebar>
+    </aside>
   )
 }
 

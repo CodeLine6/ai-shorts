@@ -12,7 +12,7 @@ export const videoStyles = [
         image : '/cinematic.png'
     },
     {
-        name: 'Cartoon',
+        name: '3D Pixar',
         image : '/3d.png'
     },
     {

@@ -67,6 +67,15 @@ const generateTtsTags = async (script: string) => {
             text += chunk.text;
         }
 
+        const taggedText = JSON.parse(text).tts_text;
+
+        if (!taggedText) {
+            return {
+                success: false,
+                message: "Couldn't generate tags"
+            }
+        }
+
         return {
             success: true,
             tts_text: JSON.parse(text).tts_text ?? "Couldn't generate tags"

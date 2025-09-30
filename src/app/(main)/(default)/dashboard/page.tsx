@@ -1,4 +1,4 @@
-import VideoList from './_components/VideoList'
+import VideoList from '../../_components/VideoList'
 
 function Dashboard() {
   return (

@@ -157,7 +157,7 @@ function AITabContent({ onHandleInputChange, topicErrors, setEditedScriptContent
                   onClick={() => {
                     scriptIndex.setSelectedScriptIndex(index)
                     onHandleInputChange('script', script)
-                  }} title={`${script.content}`}>
+                  }} title={`${script.tts_text}`}>
                   <div
                     className={`absolute w-full top-0 right-0 bg-gradient-to-r from-transparent ${scriptIndex.selectedScriptIndex === index ? 'to-secondary' : 'to-black'} p-2 rounded hidden group-hover:flex justify-end`}
                   >
@@ -171,7 +171,7 @@ function AITabContent({ onHandleInputChange, topicErrors, setEditedScriptContent
                     />
                   </div>
                   <h2 className="line-clamp-4 text-sm text-gray-300">
-                    {script.content}
+                    {script.tts_text}
                   </h2>
                 </div>
               )

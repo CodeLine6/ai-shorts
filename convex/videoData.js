@@ -15,7 +15,6 @@ export const CreateVideoData = mutation({
             voiceId: v.string(),
             name: v.string(),
         })),
-        musicTrack: v.optional(v.object({ name: v.string(), url: v.string() })),
         images: v.optional(v.any()),
         audioUrl: v.optional(v.string()),
         captionJson: v.optional(v.any()),
@@ -29,6 +28,12 @@ export const CreateVideoData = mutation({
             renderProgress: 0,
             createdAt: new Date().toISOString(),
             trashed: false,
+            config: {
+                transition: "",
+                subtitle: null,
+                backgroundEffects: "",
+            intensity: "",
+            },
         });
     },
 });
@@ -141,9 +146,18 @@ export const UpdateVideoRecord = mutation(
             renderProgress: v.optional(v.number()),
             trashed: v.optional(v.boolean()),
             musicTrack: v.optional(v.object({ name: v.string(), url: v.string() })),
+            config: v.optional(
+                v.object({
+                          transition: v.string(),
+                          subtitle: v.any(),
+                          backgroundEffects: v.string(),
+                          intensity: v.string(),
+                        })
+            ),
+            lastModified: v.optional(v.string()),
         },
         handler: async ({ db }, args) => {
-            // Build update object with only provided fields 
+            // Build update object with only provided fields
             const updateData = {};
             if (args.audioUrl !== undefined) {
                 updateData.audioUrl = args.audioUrl;
@@ -172,16 +186,29 @@ export const UpdateVideoRecord = mutation(
             if (args.musicTrack !== undefined) {
                 updateData.musicTrack = args.musicTrack;
             }
-            // Single patch operation 
+            if (args.config !== undefined) {
+                updateData.config = args.config;
+            }
+            if (args.lastModified !== undefined) {
+                updateData.lastModified = args.lastModified;
+            }
+
+            // Single patch operation
             const result = await db.patch(args.recordId, updateData);
             return result;
         }
     });
 
 export const GetVideoRecord = query({
-    args: { recordId: v.id('videoData') },
+    args: { recordId: v.string() },
     handler: async ({ db }, args) => {
-        const result = await db.get(args.recordId); return result
+        try {
+            const result = await db.get(args.recordId); 
+            return result
+        }
+        catch (error) {
+            return "Video not found"
+        }
     }
 })
 
@@ -206,3 +233,75 @@ export const trashVid = mutation({
         return result
     }
 })
+
+export const GetVideosPaginated = query(
+    {
+        args: { paginationOpts:  v.object({ cursor: v.union(v.string(), v.null()) }) },
+        handler: async ({ db }, args) => {
+            const result = await db.query('videoData')
+                .order('desc').paginate({
+                    numItems: 5,
+                    cursor: args.paginationOpts.cursor
+                });
+
+            return result
+        }
+    });
+
+// ✅ Get total number of videos
+export const getTotalVideosCount = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db.query("videoData").collect();
+        return videos.length;
+    },
+});
+
+// ✅ Get count of completed videos
+export const getCompletedVideosCount = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db
+            .query("videoData")
+            .withIndex("by_status", (q) => q.eq("status", "Completed"))
+            .collect();
+        return videos.length;
+    },
+});
+
+// ✅ Get count of in-progress videos
+export const getInProgressVideosCount = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db
+            .query("videoData")
+            .filter((q) =>
+                q.and(
+                    q.neq(q.field("status"), "Completed"),
+                    q.neq(q.field("status"), "Failed"),
+                    q.neq(q.field("trashed"), true)
+                )
+            )
+            .collect();
+        return videos.length;
+    },
+});
+
+// ✅ Get count of failed videos
+export const getFailedVideosCount = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db
+            .query("videoData")
+            .withIndex("by_status", (q) => q.eq("status", "Failed"))
+            .collect();
+        return videos.length;
+    },
+});
+
+// ✅ Get count of trashed videos
+export const getTrashedVideosCount = query({
+    handler: async (ctx) => {
+        const videos = await ctx.db
+            .query("videoData")
+            .filter((q) => q.eq(q.field("trashed"), true))
+            .collect();
+        return videos.length;
+    },
+});

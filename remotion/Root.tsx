@@ -4,6 +4,7 @@ import RemotionComposition from './../src/app/_components/RemotionComposition';
 import './styles.css';
 import * as z from 'zod';
 import { musicTracks } from '../src/config/musicTracks';
+import { motionConfig } from './motionConfig';
 
 const videoData = {
   audioUrl: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j9740nggz2t7jncdt54k7br4917p1178/audio/The_Skills_of_Tomorrow-1755664666862.mp3",
@@ -770,6 +771,12 @@ const videoData = {
     "text-yellow-400 font-semibold uppercase tracking-wide drop-shadow-md px-3 py-1 rounded-lg",
 },
 musicTrack: musicTracks[0],
+ motionConfig: {
+    imageTransition: 'fade', // 'fade', 'slide', 'zoom', 'rotate'
+    textAnimation: 'spring', // 'spring', 'bounce', 'slide'
+    backgroundEffect: 'parallax', // 'parallax', 'kenBurns', 'drift'
+    intensity: 'medium' // 'low', 'medium', 'high'
+  }
 }
 
 const videoDataSchema = z.object({
@@ -817,9 +824,19 @@ const videoDataSchema = z.object({
     name: z.string(),
     url: z.string(),
   }).optional(),
+   motionConfig: motionConfig,
+   status: z.string(),
+  config: z.object({
+    transition: z.string(),
+    subtitle: z.any(),
+    backgroundEffects: z.string(),
+    intensity: z.string(),
+  })
 })
 
-const calculateMetadata = ({props} : {props: {videoData: z.infer<typeof videoDataSchema>}}) => {
+export type videoData = z.infer<typeof videoDataSchema>
+
+const calculateMetadata = ({props} : {props: {videoData: videoData}}) => {
   const {videoData} = props
   const {utterances} = videoData.captionJson
   return {
@@ -831,7 +848,6 @@ const calculateMetadata = ({props} : {props: {videoData: z.infer<typeof videoDat
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <>
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
@@ -843,9 +859,7 @@ export const RemotionRoot: React.FC = () => {
             ...videoData,
           }
         }}
-        schema={z.object({ videoData: videoDataSchema })}
         calculateMetadata={calculateMetadata}
       />
-    </>
   );
 };

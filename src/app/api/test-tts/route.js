@@ -14,7 +14,7 @@ export async function GET(req, res) {
 
   try {
 
-      /* const audio = await client.textToSpeech.convert("21m00Tcm4TlvDq8ikWAM", {
+    /* const audio = await client.textToSpeech.convert("21m00Tcm4TlvDq8ikWAM", {
 
       text: "hello how are you?",
 
@@ -22,7 +22,7 @@ export async function GET(req, res) {
 
     });
 
-     const chunks = [];
+    const chunks = [];
     for await (const chunk of audio) {
       chunks.push(chunk);
     }
@@ -34,33 +34,55 @@ export async function GET(req, res) {
         'Content-Length': audioBuffer.length.toString(),
       },
     }); */
-    
+
+    // get prompt from search parameter
+    const prompt = req.nextUrl.searchParams.get('prompt');
+
+    const fluxReq = await a4fClient.images.generate({
+      model: "provider-4/imagen-3",
+      prompt: prompt,
+      response_format: "b64_json",
+      output_compression: 50,
+      size: "1024x1792",
+    });
+
+    const base64 = fluxReq.data?.[0]?.b64_json;
+
+    const imageBuffer = Buffer.from(base64, 'base64');
+    return new Response(imageBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Length': imageBuffer.length.toString(),
+      },
+    });
+
     // get prompt from search parameter
     /* const prompt = req.nextUrl.searchParams.get('prompt');
 
-    const fluxReq = await a4fClient.images.generate({
-                      model: "provider-3/FLUX.1-schnell",
-                      prompt: prompt,
-                      response_format: "b64_json",
-                      output_compression: 50,
-                      size: "1080x1920"
-                      
-                });
-    
-                const  base64 = fluxReq.data?.[0]?.b64_json;
+    const fluxReq = await fetch("https://free-image-generation-api.abhimanyutokas.workers.dev/", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer omnamobhagvatevasudevae",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, width: 1024, height: 1792,negative_prompt: "blurry, low quality, pixelated, distorted, text, watermark, signature, logo, bad anatomy, extra limbs, deformed hands, repetition" }),
+    });
 
-                const imageBuffer = Buffer.from(base64, 'base64');
-                return new Response(imageBuffer, {
-                  headers: {
-                    'Content-Type': 'image/png',
-                    'Content-Length': imageBuffer.length.toString(),
-                  },
-                }); */
+    const blob = await fluxReq.blob();
+    const base64 = await blob.arrayBuffer();
 
-      const id = req.nextUrl.searchParams.get('id');
-      const result = await QueueVideo(id);
+    const imageBuffer = Buffer.from(base64, 'base64');
+    return new Response(imageBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Length': imageBuffer.length.toString(),
+      },
+    }); */
 
-      return Response.json(result);
+    /* const id = req.nextUrl.searchParams.get('id');
+    const result = await QueueVideo(id);
+
+    return Response.json(result); */
 
   } catch (error) {
     console.error('ElevenLabs API Error:', error);

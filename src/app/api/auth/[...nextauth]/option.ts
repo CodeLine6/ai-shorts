@@ -9,7 +9,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 declare module "next-auth" {
     interface User {
-        id: string;
+        _id: string;
         isVerified: boolean;
         username: string;
         firstName: string;

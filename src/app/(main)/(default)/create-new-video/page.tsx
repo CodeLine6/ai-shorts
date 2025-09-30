@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import Title from "./_components/Title";
 import { FormAction, FormState, ValidationRule } from "./types";
 import { moveSupabaseFile } from "@/lib/utils";
-import MusicSelection from "./_components/MusicSelection";
+import MusicSelection from "../../shorts/[videoId]/(customizer)/_components/CutstomizerPanel/components/MusicSelection";
 
 
 // Enhanced validation functions
@@ -254,18 +254,6 @@ const formFields: FormState = {
                 objectShape: { name: "string", style: "string" }
             }
         ]
-    },
-    musicTrack: {
-        value: undefined,
-        error: [],
-        rules: [
-            {
-                type: "fieldType",
-                message: "Music track must have name and url",
-                value: "object",
-                objectShape: { name: "string", url: "string" }
-            }
-        ]
     }
 }
 
@@ -280,7 +268,7 @@ const reducer = (state: FormState, action: FormAction): FormState => {
             if (!action.payload) return state;
 
             const { fieldName, fieldValue } = action.payload;
-            newState = { ...state };
+            newState = {...state};
             const field = newState[fieldName];
 
             // Update the field
@@ -333,14 +321,14 @@ function Page() {
     }
 
     const hasFormErrors = (): boolean => {
-        const validatedData = { ...formData };
+        const validatedData = {...formData};
         (Object.keys(validatedData) as Array<keyof FormState>).forEach(key => {
             const field = validatedData[key];
             field.error = validateField(field.value, field.rules, validatedData);
         });
 
         // Exclude musicTrack from required validation if it's optional
-        const fieldsToCheck = Object.values(validatedData).filter(field => field !== validatedData.musicTrack);
+        const fieldsToCheck = Object.values(validatedData);
 
         return fieldsToCheck.some(field => field.error.length > 0);
     }
@@ -381,7 +369,6 @@ function Page() {
                 videoStyle: formData.videoStyle.value,
                 caption: formData.captionStyle.value,
                 voice: formData.voice.value,
-                musicTrack: formData.musicTrack.value, // Add musicTrack to the record
                 //@ts-ignore
                 uid: user._id,
                 createdBy: user?.email || "Unknown",
@@ -389,16 +376,15 @@ function Page() {
             
             const newAudioUrl = formData.audioUrl.value ? await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp) : '';
 
-            const result = await axios.post('/api/generate-video-data', {
+            const payload = {
                 ...Object.fromEntries(
-                    Object.entries(
-                        { ...formData , 
-                            audioUrl: {...formData.audioUrl,value:newAudioUrl}
-                        }
-                    ).map(([key, value]) => [key, value.value])
+                Object.entries(formData).map(([key, val]) => [key, val.value])
                 ),
+                audioUrl: newAudioUrl, // directly override instead of nesting
                 recordId: resp,
-            });
+            };
+
+            const result = await axios.post('/api/generate-video-data', payload);
 
             if (result.data?.error) {
                 toast({
@@ -459,10 +445,7 @@ function Page() {
                         onHandleInputChange={onHandleInputChange}
                         errors={formData.captionStyle.error}
                     />
-                    <MusicSelection
-                        onHandleInputChange={onHandleInputChange}
-                        errors={formData.musicTrack.error}
-                    />
+                    
                     <Button
                         disabled={loading}
                         className="w-full mt-5"

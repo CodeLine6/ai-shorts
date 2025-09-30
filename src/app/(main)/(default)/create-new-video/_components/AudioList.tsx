@@ -5,6 +5,7 @@ import FlagIcon from 'react-flagkit';
 import React from 'react';
 import { accentToCountryCode } from './Voice'; // Keep for flag mapping
 import { AudioItem } from '../types'; // New import
+import { cn } from '@/lib/utils';
 
 interface AudioListProps<T extends AudioItem> {
     items: T[];
@@ -18,6 +19,7 @@ interface AudioListProps<T extends AudioItem> {
     getItemName: (item: T) => string; // Function to get display name
     getItemAccent?: (item: T) => string | undefined; // Optional function for accent
     renderItemDetails?: (item: T) => React.ReactNode;
+    variant?: 'default' | 'compact';
 }
 
 const AudioList = <T extends AudioItem>({
@@ -31,11 +33,12 @@ const AudioList = <T extends AudioItem>({
     getItemKey,
     getItemName,
     getItemAccent,
-    renderItemDetails
+    renderItemDetails,
+    variant = 'default',
 }: AudioListProps<T>) => {
     return (
-        <ScrollArea className={`h-[200px] rounded-md border p-4 ${errors.length > 0 && 'border-red-500'}`}>
-            <div className='grid grid-cols-2 gap-3 mt-2'>
+        <ScrollArea className={cn(variant === 'compact' && 'mt-5 h-[200px] rounded-md border p-4', errors.length > 0 && 'border-red-500')}>
+            <div className={cn( "grid gap-3", variant === 'compact' ? 'grid-cols-2': 'grid-cols-1' )}>
                 {items?.map((item: T) => {
                     const itemKey = getItemKey(item);
                     const itemName = getItemName(item);

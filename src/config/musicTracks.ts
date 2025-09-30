@@ -1,4 +1,4 @@
-import { AudioItem } from "@/app/(main)/dashboard/create-new-video/types";
+import { AudioItem } from "@/app/(main)/(default)/create-new-video/types";
 
 export const musicTracks: AudioItem[] = [
   {

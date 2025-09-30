@@ -10,7 +10,7 @@ const Hero = () => {
         </p>
         <div className="mt-7 flex gap-8">
             <Button size={"lg"} variant={"secondary"}>Explore</Button>
-            <Link href={'/dashboard/create-new-video'}>
+            <Link href={'/create-new-video'}>
               <Button size={"lg"}>Get Started</Button>
             </Link>
         </div>

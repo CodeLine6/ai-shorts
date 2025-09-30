@@ -405,7 +405,6 @@ export const GenerateVideoData = inngest.createFunction(
       return imageResults; // ✅ Only URLs now, much smaller!
     });
 
-
     const ImageObject = await step.run("formatImageObject", async () => {
       const images = await Promise.all(
         GenerateImages.map(async ({ imageUrl, sceneContent }, index) => {
@@ -456,12 +455,6 @@ export const GenerateVideoData = inngest.createFunction(
       }
     });
 
-    const InitiateRender = await step.run("InitiateRender", async () => {
-      // Put the video in queue
-      const result = await QueueVideo(recordId);
-
-    });
-
-    return InitiateRender// The main function will return the result of RenderVideo step
+    return SaveToDatabase// The main function will return the result of RenderVideo step
   },
 );

@@ -83,7 +83,8 @@ function Voice({ onHandleInputChange, errors }: { onHandleInputChange: (fieldNam
       <p className='text-sm text-gray-400'>
         Select voice for your video
       </p>
-      <AudioList<voice>
+      <AudioList<voice> 
+        variant='compact'
         items={voices}
         errors={errors}
         selectedItemId={selectedVoiceId}

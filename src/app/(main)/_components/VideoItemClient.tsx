@@ -26,7 +26,7 @@ const RenderProgress = ({ status, progress }: { status: string | undefined, prog
 }
 
 const VideoStatus = ({ status, progress }: { status: string | undefined, progress: number | undefined }) => {
-  if (status == 'Completed') return null
+  if (status == 'Completed' || status == 'Ready') return null
   return (
     <div className={`absolute top-0 left-0 w-full h-full ${status?.includes('Failed') ? 'bg-red-900' : 'bg-black'} bg-opacity-80 flex items-center justify-center gap-2`}>
       {status?.includes('Failed') ?
@@ -59,7 +59,7 @@ export const VideoItemClient = ({ videoData, index }: { videoData: VideoData, in
     })
   }
   return (
-    <Link href={`/dashboard/play-video/${video?._id}`} key={index}>
+    <Link href={`/shorts/${video?._id}`} key={index}>
       <div className="relative aspect-[2/3] rounded-md overflow-hidden" key={index}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

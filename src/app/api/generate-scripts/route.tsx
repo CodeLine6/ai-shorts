@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 const SCRIPT_PROMPT = `write two different script for 30 to 50 Seconds video on Topic: {topic},
 • Do not add Scene descriptions
 • Do not add anything in Braces. Just return plain story in text 
-• Create two versions of the script, One with just text and other with text and tags specifying the tone & pace of the speaker which will be used to generate text to speech.
+• Create two versions of the script, One with just text and other one with emotions in tags like [sarcastically] for eleven labs model.
 • Be creative and avoid generic or repetitive phrasing.
 • Give me response in JSON format and follow the schema
 -{

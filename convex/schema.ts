@@ -1,3 +1,4 @@
+import { backgroundEffects } from "@/app/(main)/shorts/[videoId]/(customizer)/config";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -76,6 +77,15 @@ export default defineSchema(
         bucketName: v.optional(v.string() || null), // GCS bucket name
         trashed: v.optional(v.boolean()),
         createdAt: v.optional(v.string()),
+        config: v.optional(
+          v.object({
+          transition: v.optional(v.string()),
+          subtitle: v.optional(v.any()),
+          backgroundEffects: v.optional(v.string()),
+          intensity: v.optional(v.string()),
+        })
+        ),
+        lastModified: v.optional(v.string()),
       }).index("by_uid", ["uid"])
       .index("by_status", ["status"])
       .index("by_queuedAt", ["queuedAt"]) // For queue ordering 
@@ -111,6 +121,12 @@ export interface VideoData {
   bucketName?: string | null; // Added and made optional
   trashed?: boolean; // Added and made optional
   createdAt?: string; // Added and made optional
+  config?: {
+    transition: string;
+    subtitle: any;
+    backgroundEffects: string;
+    intensity: string;
+  }
   _creationTime: number;
 }
 

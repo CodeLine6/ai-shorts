@@ -1,55 +1,52 @@
-"use client";
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import { VideoData } from "@/../convex/schema";
 import { api } from "@/../convex/_generated/api";
+import { ConvexHttpClient } from "convex/browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Video, Play, CheckCircle, XCircle } from "lucide-react";
-export default function AdminVideosPage() {
-  const videosData = useQuery(api.videoData.GetAllVideos);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: string } | null>(null);
-  if (!videosData) {
-    return <div className="flex items-center justify-center min-h-screen">Loading videos...</div>;
-  }
-  if (!videosData.success) {
-    return <div className="flex items-center justify-center min-h-screen">Error loading videos: {videosData.message}</div>;
-  }
-  const videos = videosData.data || [];
-  // Sorting function
-  const sortedVideos = [...videos];
-  if (sortConfig !== null) {
-    sortedVideos.sort((a, b) => {
-      // @ts-ignore
-      if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === 'ascending' ? -1 : 1;
-      }
-      // @ts-ignore
-      if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === 'ascending' ? 1 : -1;
-      }
-      return 0;
+import { Video, Play, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { InfiniteAdminVideoListClient } from "./_components/InfiniteAdminVideoListClient";
+
+export const dynamic = "force-dynamic";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export default async function AdminVideosPage() {
+  const initialLoadCount = 10; // Number of videos to load initially
+
+  // Fetch total counts for summary cards
+  const totalVideosCount = await convex.query(api.videoData.getTotalVideosCount);
+  const completedVideosCount = await convex.query(api.videoData.getCompletedVideosCount);
+  const inProgressVideosCount = await convex.query(api.videoData.getInProgressVideosCount);
+  const failedVideosCount = await convex.query(api.videoData.getFailedVideosCount);
+  const trashedVideosCount = await convex.query(api.videoData.getTrashedVideosCount);
+
+  const initialResult = await convex.query(api.videoData.GetVideosPaginated, {
+    paginationOpts: {
+      cursor: null,
+    },
+  });
+
+  const initialVideos: VideoData[] = initialResult.page;
+  const initialCursor: string | null = initialResult.continueCursor;
+  const isDone: boolean = initialResult.isDone;
+
+  // This server action will be passed to the client component to fetch more videos
+  const fetchMoreAdminVideos = async (cursor: string | null) => {
+    "use server";
+    const { continueCursor, isDone, page } = await convex.query(api.videoData.GetVideosPaginated, {
+      paginationOpts: {
+        cursor,
+      },
     });
-  }
-  const requestSort = (key: string) => {
-    let direction = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
+    return { page, cursor: continueCursor, done: isDone };
   };
-  // Calculate statistics
-  const totalVideos = videos.length;
-  const completedVideos = videos.filter(video => video.status === 'Completed').length;
-  const inProgressVideos = videos.filter(video => video.status !== 'Completed' && video.status !== 'Failed').length;
-  const failedVideos = videos.filter(video => video.status === 'Failed').length;
-  const videoStyles = Array.from(new Set(videos.map(video => video.videoStyle)));
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Videos Management</h1>
         <p className="text-muted-foreground">Overview and management of all videos</p>
       </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -58,7 +55,7 @@ export default function AdminVideosPage() {
             <Video className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalVideos}</div>
+            <div className="text-2xl font-bold">{totalVideosCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -67,7 +64,7 @@ export default function AdminVideosPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedVideos}</div>
+            <div className="text-2xl font-bold">{completedVideosCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -76,7 +73,7 @@ export default function AdminVideosPage() {
             <Play className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inProgressVideos}</div>
+            <div className="text-2xl font-bold">{inProgressVideosCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -85,79 +82,30 @@ export default function AdminVideosPage() {
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{failedVideos}</div>
+            <div className="text-2xl font-bold">{failedVideosCount}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Video Styles</CardTitle>
-            <Video className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Trashed Videos</CardTitle>
+            <Trash2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{videoStyles.length}</div>
+            <div className="text-2xl font-bold">{trashedVideosCount}</div>
           </CardContent>
         </Card>
       </div>
-      {/* Videos Table */}
+
+      {/* Videos Table with Infinite Scrolling */}
       <Card>
         <CardHeader>
           <CardTitle>All Videos</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="cursor-pointer" onClick={() => requestSort('title')}>
-                  Title {sortConfig?.key === 'title' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => requestSort('createdBy')}>
-                  Creator {sortConfig?.key === 'createdBy' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => requestSort('videoStyle')}>
-                  Style {sortConfig?.key === 'videoStyle' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => requestSort('status')}>
-                  Status {sortConfig?.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedVideos.map((video) => (
-                <TableRow key={video._id}>
-                  <TableCell className="font-medium max-w-xs truncate">{video.title}</TableCell>
-                  <TableCell>{video.createdBy}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{video.videoStyle}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        video.status === 'Completed'
-                          ? 'default'
-                          : video.status === 'Failed'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                    >
-                      {video.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {video.status === 'Completed' && video.downloadUrl ? (
-                      <a href={video.downloadUrl} target="_blank" rel="noopener noreferrer">
-                        <Play className="h-4 w-4 text-green-500 cursor-pointer" />
-                      </a>
-                    ) : video.status === 'Failed' ? (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <Play className="h-4 w-4 text-gray-400" />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <InfiniteAdminVideoListClient
+            initialVideos={initialVideos}
+            fetchMoreVideos={fetchMoreAdminVideos}
+          />
         </CardContent>
       </Card>
     </div>

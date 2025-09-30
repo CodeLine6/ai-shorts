@@ -164,7 +164,7 @@ export const UpdateVideoRecordStatus = mutation({
 ```
 The credit refund logic now also uses the atomic `AdjustUserCredits` mutation to add 1 credit back to the user.
 
-### 3. `src/app/(main)/dashboard/create-new-video/page.tsx`
+### 3. `src/app/(main)/create-new-video/page.tsx`
 
 The client-side call to `CreateInitialVideoRecord` has been updated to no longer pass the `credits` argument, as this is now handled server-side within the Convex mutation.
 
