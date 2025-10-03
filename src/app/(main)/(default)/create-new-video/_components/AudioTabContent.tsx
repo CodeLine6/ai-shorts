@@ -200,7 +200,7 @@ function AudioTabContent({onHandleInputChange,clearScriptandTopic}: {onHandleInp
             {/* File Upload Section */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg transition-colors duration-200 relative">
                 <div className={`absolute inset-0 h-full w-full rounded-md bg-slate-900 z-0`}
-                    style={{ clipPath: `inset(0 0 calc(100% - ${progress}%) 0)`, transition: progress  ?  "clip-path 0.3s ease-in-out" : "none" }}
+                    style={{ clipPath: `inset(0 calc(100% - ${progress}%) 0 0)`, transition: progress  ?  "clip-path 0.3s ease-in-out" : "none" }}
                 ></div>
                 <input {...getInputProps()} className="hidden" />
                 

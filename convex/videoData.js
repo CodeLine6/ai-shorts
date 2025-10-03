@@ -32,7 +32,7 @@ export const CreateVideoData = mutation({
                 transition: "",
                 subtitle: null,
                 backgroundEffects: "",
-            intensity: "",
+                intensity: "",
             },
         });
     },
@@ -155,6 +155,7 @@ export const UpdateVideoRecord = mutation(
                         })
             ),
             lastModified: v.optional(v.string()),
+            volume: v.optional(v.object({ backgroundMusic: v.number(), voice: v.number() })),
         },
         handler: async ({ db }, args) => {
             // Build update object with only provided fields
@@ -191,6 +192,9 @@ export const UpdateVideoRecord = mutation(
             }
             if (args.lastModified !== undefined) {
                 updateData.lastModified = args.lastModified;
+            }
+            if (args.volume !== undefined) {
+                updateData.volume = args.volume;
             }
 
             // Single patch operation

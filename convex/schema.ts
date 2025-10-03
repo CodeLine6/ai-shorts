@@ -86,6 +86,7 @@ export default defineSchema(
         })
         ),
         lastModified: v.optional(v.string()),
+        volume: v.optional(v.object({ backgroundMusic: v.number(), voice: v.number() }))
       }).index("by_uid", ["uid"])
       .index("by_status", ["status"])
       .index("by_queuedAt", ["queuedAt"]) // For queue ordering 
@@ -126,6 +127,11 @@ export interface VideoData {
     subtitle: any;
     backgroundEffects: string;
     intensity: string;
+  },
+  lastModified?: string; // Added and made optional
+  volume?: {
+    backgroundMusic: number;
+    voice: number;
   }
   _creationTime: number;
 }

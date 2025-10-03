@@ -30,10 +30,10 @@ import {
 } from 'lucide-react';
 
 
-const BackgroundEffects = lazy(() => import("./_components/CutstomizerPanel/components/BackgroundEffects"));
-const MusicComp = lazy(() => import("./_components/CutstomizerPanel/components/Music"));
-const Transitions = lazy(() => import("./_components/CutstomizerPanel/components/Transitions"));
-const Capt = lazy(() => import("./_components/CutstomizerPanel/components/Captions"));
+const BackgroundEffects = lazy(() => import("./CutstomizerPanel/components/BackgroundEffects"));
+const MusicComp = lazy(() => import("./CutstomizerPanel/components/Music"));
+const Transitions = lazy(() => import("./CutstomizerPanel/components/Transitions"));
+const Capt = lazy(() => import("./CutstomizerPanel/components/Captions"));
 
 
 export const TabItems = [

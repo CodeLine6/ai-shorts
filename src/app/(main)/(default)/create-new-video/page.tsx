@@ -16,8 +16,6 @@ import { useRouter } from "next/navigation";
 import Title from "./_components/Title";
 import { FormAction, FormState, ValidationRule } from "./types";
 import { moveSupabaseFile } from "@/lib/utils";
-import MusicSelection from "../../shorts/[videoId]/(customizer)/_components/CutstomizerPanel/components/MusicSelection";
-
 
 // Enhanced validation functions
 function validateObjectShape(obj: Record<string, any>, shape: Record<string, string>): string[] {

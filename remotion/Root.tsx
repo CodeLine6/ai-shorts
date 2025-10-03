@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { musicTracks } from '../src/config/musicTracks';
 import { motionConfig } from './motionConfig';
 
-const videoData = {
+const videoDataDefault = {
   audioUrl: "https://ltdxxqeuuoibizgjzxqo.supabase.co/storage/v1/object/public/media/j9740nggz2t7jncdt54k7br4917p1178/audio/The_Skills_of_Tomorrow-1755664666862.mp3",
   captionJson: {
   sentences: [
@@ -771,10 +771,10 @@ const videoData = {
     "text-yellow-400 font-semibold uppercase tracking-wide drop-shadow-md px-3 py-1 rounded-lg",
 },
 musicTrack: musicTracks[0],
- motionConfig: {
-    imageTransition: 'fade', // 'fade', 'slide', 'zoom', 'rotate'
-    textAnimation: 'spring', // 'spring', 'bounce', 'slide'
-    backgroundEffect: 'parallax', // 'parallax', 'kenBurns', 'drift'
+ config: {
+    transition: 'fade', // 'fade', 'slide', 'zoom', 'rotate'
+    subtitle: 'spring', // 'spring', 'bounce', 'slide'
+    backgroundEffects: 'parallax', // 'parallax', 'kenBurns', 'drift'
     intensity: 'medium' // 'low', 'medium', 'high'
   }
 }
@@ -824,14 +824,11 @@ const videoDataSchema = z.object({
     name: z.string(),
     url: z.string(),
   }).optional(),
-   motionConfig: motionConfig,
-   status: z.string(),
-  config: z.object({
-    transition: z.string(),
-    subtitle: z.any(),
-    backgroundEffects: z.string(),
-    intensity: z.string(),
-  })
+  volume: z.object({
+    backgroundMusic: z.number(),
+    voice: z.number(),
+  }),
+  config: motionConfig
 })
 
 export type videoData = z.infer<typeof videoDataSchema>
@@ -848,6 +845,7 @@ const calculateMetadata = ({props} : {props: {videoData: videoData}}) => {
 
 export const RemotionRoot: React.FC = () => {
   return (
+    <>
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
@@ -856,10 +854,12 @@ export const RemotionRoot: React.FC = () => {
         height={1280}
         defaultProps={{
           videoData: {
-            ...videoData,
+            ...videoDataDefault,
           }
         }}
+        schema={z.object({ videoData: videoDataSchema })}
         calculateMetadata={calculateMetadata}
       />
+    </>
   );
 };

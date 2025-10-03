@@ -49,9 +49,9 @@ const AudioList = <T extends AudioItem>({
                     return (
                         <div
                             key={itemKey}
-                            className={`cursor-pointer p-3 dark:bg-slate-900 dark:border rounded-lg hover:border-white flex justify-between ${itemKey === selectedItemId ? 'border-white' : ''}`}
+                            className={`cursor-pointer p-3 dark:bg-background dark:border rounded-lg hover:border-white flex justify-between ${itemKey === selectedItemId ? 'border-white' : ''}`}
                             onClick={() => onSelectItem(item)}>
-                            <div>
+                            <div className='my-auto'>
                             <div className='flex items-center gap-2'>
                                 <h2 className='font-semibold'>{itemName}</h2>
                                 {showFlag && itemAccent && accentToCountryCode[itemAccent] && (

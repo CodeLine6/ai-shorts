@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useParams } from "next/navigation";
 import RemotionPlayer from "../(customizer)/_components/RemotionPlayer";
-import CutstomizerPanel from "../(customizer)/_components/CutstomizerPanel";
+import CutstomizerPanel from "../(customizer)/CutstomizerPanel";
 import CustomizerHeader from "../(customizer)/_components/CustomizerHeader";
 import { VideoData } from "@/../convex/schema";
 

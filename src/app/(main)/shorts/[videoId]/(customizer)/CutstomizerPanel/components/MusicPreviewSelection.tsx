@@ -8,8 +8,10 @@ import AudioList from '@/app/(main)/(default)/create-new-video/_components/Audio
 
 function MusicPreviewSelection({
   onHandleInputChange,
+  className = "",
 }: {
   onHandleInputChange: (fieldName: string, fieldValue: any) => void;
+  className?: string
 }) {
   const [currentPlayingTrackUrl, setCurrentPlayingTrackUrl] = useState<string | null>(null);
   
@@ -40,7 +42,7 @@ function MusicPreviewSelection({
   };
 
   return (
-    <>
+    <div className={className}>
       
       <AudioList<AudioItem>
           items={musicTracks}
@@ -54,7 +56,7 @@ function MusicPreviewSelection({
       />
       
       <audio ref={audioRef} onEnded={() => setCurrentPlayingTrackUrl(null)} />
-    </>
+    </div>
   );
 }
 

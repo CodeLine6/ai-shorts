@@ -1,5 +1,5 @@
 import React from 'react'
-import { textAnimations } from '../../../config'
+import { textAnimations } from '../../config'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { backgroundEffects } from '../../../config'
+import { backgroundEffects } from '../../config'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 

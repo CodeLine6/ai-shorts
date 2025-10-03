@@ -32,7 +32,7 @@ const getMotionIntensity = (intensity: string) => {
 
 const RemotionComposition = ({ videoData }: { videoData: any }) => {
   const captions: { sentences: sentence[], utterances: utterance[] } = videoData?.captionJson
-  const utterances = captions.utterances;
+  const {utterances} = captions;
   const { fps } = useVideoConfig()
   const imageList = videoData?.images
   const frame = useCurrentFrame();
@@ -496,9 +496,9 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
       </AbsoluteFill>
 
       {/* Audio */}
-      {videoData?.audioUrl && <Audio src={videoData.audioUrl} />}
+      {videoData?.audioUrl && <Audio src={videoData.audioUrl} volume={videoData.volume.voice ?? 1 } />}
       {videoData?.musicTrack?.url && (
-        <Audio src={videoData.musicTrack.url} loop volume={0.4} />
+        <Audio src={videoData.musicTrack.url} loop volume={videoData.volume.backgroundMusic ?? 0.4 } />
       )}
     </div>
   )
