@@ -41,13 +41,15 @@ export async function POST(request: Request) {
     // Trigger processing of next video in queue
     try {
       const siteUrl = process.env.NEXTAUTH_URL || process.env.URL;
-      fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
+      await fetch(`${siteUrl}/.netlify/functions/trigger-video-processing`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-netlify-trigger': process.env.NETLIFY_TRIGGER_SECRET || 'internal'
         }
-      }).catch(console.error); // Fire and forget
+      })
+
+      
     } catch (e) {
       console.error("Failed to trigger next video processing:", e);
     }
