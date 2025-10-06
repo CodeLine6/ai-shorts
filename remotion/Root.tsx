@@ -845,7 +845,7 @@ const calculateMetadata = ({props} : {props: {videoData: videoData}}) => {
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <>
+    
       <Composition
         id="youtubeShort"
         component={RemotionComposition}
@@ -860,6 +860,6 @@ export const RemotionRoot: React.FC = () => {
         schema={z.object({ videoData: videoDataSchema })}
         calculateMetadata={calculateMetadata}
       />
-    </>
+    
   );
 };

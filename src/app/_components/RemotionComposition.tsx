@@ -496,9 +496,9 @@ const RemotionComposition = ({ videoData }: { videoData: any }) => {
       </AbsoluteFill>
 
       {/* Audio */}
-      {videoData?.audioUrl && <Audio src={videoData.audioUrl} volume={videoData.volume.voice ?? 1 } />}
+      {videoData?.audioUrl && <Audio src={videoData.audioUrl} volume={videoData.volume?.voice} />}
       {videoData?.musicTrack?.url && (
-        <Audio src={videoData.musicTrack.url} loop volume={videoData.volume.backgroundMusic ?? 0.4 } />
+        <Audio src={videoData.musicTrack.url} loop volume={videoData.volume?.backgroundMusic} />
       )}
     </div>
   )

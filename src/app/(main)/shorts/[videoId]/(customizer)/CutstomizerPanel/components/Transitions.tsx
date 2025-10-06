@@ -7,14 +7,14 @@ const Transitions = ({customizeVideo, effectsData}:{customizeVideo: (string: any
    const handleClick = (value: string) => {
        customizeVideo(
         "config",{
-         ...effectsData,
+         ...effectsData.config,
          transition: value
        })
     }
   return (
     <div className='grid grid-cols-3 gap-4'>
       {imageTransitions.map(effect => {
-        return <Button onClick={() => handleClick(effect.value)} variant={"outline"} className={cn("flex flex-col items-center gap-2 py-10", effectsData?.transition === effect.value && "bg-muted")}>
+        return <Button onClick={() => handleClick(effect.value)} variant={"outline"} className={cn("flex flex-col items-center gap-2 py-10", effectsData?.config?.transition === effect.value && "bg-muted")}>
                   <effect.icon />
                   {effect.label}
               </Button>

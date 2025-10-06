@@ -9,11 +9,12 @@ const Music = ({
   customizeVideo: (property: string, value: any) => void;
   effectsData: any;
 }) => {
+  const volumes = effectsData.volume
   const updateVolume = (type: "backgroundMusic" | "voice") => {
-    const volume = effectsData.volume;
+    
     return (value: number) => {
       customizeVideo("volume", {
-        ...volume,
+        ...volumes,
         [type]: value,
       });
     }
@@ -25,8 +26,8 @@ const Music = ({
         className="flex-grow"
       />
       <div className="flex pt-5 gap-2">
-        <Volume Icon={Music2} volume={effectsData.volume.backgroundMusic} orientation="vertical" updateVolume={updateVolume("backgroundMusic")}  />
-        <Volume Icon={MicVocal} volume={effectsData.volume.voice} orientation="vertical" updateVolume={updateVolume("voice")} />
+        <Volume Icon={Music2} volume={volumes.backgroundMusic} orientation="vertical" updateVolume={updateVolume("backgroundMusic")}  />
+        <Volume Icon={MicVocal} volume={volumes.voice} orientation="vertical" updateVolume={updateVolume("voice")} />
       </div>
     </div>
   );

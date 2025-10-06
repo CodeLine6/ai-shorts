@@ -208,7 +208,10 @@ export const GetVideoRecord = query({
     handler: async ({ db }, args) => {
         try {
             const result = await db.get(args.recordId); 
-            return result
+            return {
+                ...result,
+                volume: result.volume ?? {backgroundMusic: 0.4, voice: 1},
+            }
         }
         catch (error) {
             return "Video not found"
