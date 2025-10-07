@@ -850,8 +850,8 @@ export const RemotionRoot: React.FC = () => {
         id="youtubeShort"
         component={RemotionComposition}
         fps={30}
-        width={720}
-        height={1280}
+        width={1080}
+        height={1920}
         defaultProps={{
           videoData: {
             ...videoDataDefault,

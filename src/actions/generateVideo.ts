@@ -4,11 +4,18 @@
 
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
+import { Id } from "@/../convex/_generated/dataModel";
 
-export const QueueVideo = async (videoId: any) => {
+export const QueueVideo = async (videoId: any, userId: Id<"users">) => {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
   
   try {
+    // Deduct credits for video rendering
+    await convex.mutation(api.user.AdjustUserCredits, {
+      userId,
+      amount: -20, // Deduct 20 credits for video rendering
+    });
+
     // Queue the video
     await convex.mutation(api.videoData.queueVideo, { videoId });
 
@@ -31,7 +38,7 @@ export const QueueVideo = async (videoId: any) => {
 
     return { ok: true, message: "Video queued" };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error queueing video:", error);
     return { ok: false, error: error.message };
   }

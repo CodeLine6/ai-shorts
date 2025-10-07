@@ -54,8 +54,25 @@ export const GenerateVideoData = inngest.createFunction(
   { event: "generate-video-data" },
 
   async ({ event, step }) => {
-    const { title, script, videoStyle, voice, recordId, audioUrl } = event.data;
+    const { title, script, videoStyle, voice, recordId, audioUrl, userId } = event.data;
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+    // Deduct credits for asset generation
+    await step.run("DeductCreditsForAssetGeneration", async () => {
+      try {
+        await convex.mutation(api.user.AdjustUserCredits, {
+          userId,
+          amount: -30, // Deduct 30 credits for collective asset generation
+        });
+      } catch (error: any) {
+        await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
+          recordId,
+          status: "Failed",
+          comments: `Credit deduction failed: ${error.message}`
+        });
+        throw new Error(`Credit deduction failed: ${error.message}`);
+      }
+    });
 
     // Generate Audio File MP3
     const GenerateAudioFile = await step.run("GenerateAudioFile", async () => {
@@ -128,7 +145,7 @@ export const GenerateVideoData = inngest.createFunction(
           filePath: publicUrlData.publicUrl, // Store the public URL
         };
 
-      } catch (error) {
+      } catch (error: any) {
         console.log("ElevenLabs API error:", error);
 
         throw new Error(`ElevenLabs API error: ${error.message}`);
