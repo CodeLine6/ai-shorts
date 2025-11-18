@@ -91,7 +91,7 @@ export const startRendering = mutation({
 export const UpdateVideoRecordStatus = mutation({
     args: {
         recordId: v.id("videoData"),
-        status: v.string(),
+        status: v.optional(v.string()),
         comments: v.optional(v.any()),
         renderProgress: v.optional(v.number()),
         downloadUrl: v.optional(v.string()),

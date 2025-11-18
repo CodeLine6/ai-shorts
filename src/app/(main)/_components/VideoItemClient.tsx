@@ -14,6 +14,7 @@ import { Id } from "@/../convex/_generated/dataModel"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/hooks/use-toast";
 import { QueueVideo } from "@/actions/generateVideo"
+import { useSession } from "next-auth/react";
 
 const RenderProgress = ({ status, progress }: { status: string | undefined, progress: number | undefined }) => {
   if (status == 'Completed') return null
@@ -48,11 +49,12 @@ const VideoStatus = ({ status, progress }: { status: string | undefined, progres
 
 export const VideoItemClient = ({ videoData, index }: { videoData: VideoData, index: number }) => {
   const convex = useConvex();
+  const { data: session } = useSession(); // Call useSession at the top level
   const videoWithUpdates = useQuery(api.videoData.GetVideoRecord, { recordId: videoData._id as Id<"videoData"> }); // Fetch video data in real-time
   const video = videoWithUpdates || videoData; 
 
   const handleRegenerate = async () => {
-    await QueueVideo(video._id)
+    await QueueVideo(video._id, session?.user?._id) // Pass userId from session
     toast({
       title: "Video Queued",
       description: "Video successfully added to the render queue.",

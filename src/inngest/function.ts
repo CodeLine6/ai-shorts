@@ -7,7 +7,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { utterance } from "@/../convex/schema";
 import { FailureEventArgs } from "inngest";
-import { QueueVideo } from "@/actions/generateVideo";
 
 const ImagePrompt = `Generate Image prompt of style {style} with all details for each scene for 30 seconds video : script : {script}
 - Give accurate image prompts strictly depending on the story line
@@ -174,8 +173,6 @@ export const GenerateVideoData = inngest.createFunction(
           audio_url: GenerateAudioFile.filePath,
           sentences: true,
         };
-
-        headers["Content-Type"] = "application/json";
 
         const postTranscriptionResponse = (
           await axios.post(gladiaV2BaseUrl + "transcription/", requestData, {

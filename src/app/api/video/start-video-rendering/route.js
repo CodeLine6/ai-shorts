@@ -5,6 +5,7 @@ import { prefetchImages } from "@/lib/utils";
 
 // Import the generated API
 import { api } from "@/../convex/_generated/api.js";
+import { NextResponse } from "next/server";
 
 // Helper function for retries
 async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
@@ -25,16 +26,16 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
   }
 }
 
-export const handler = async (event, context) => {
+export async function POST(request) {
   console.log("Background video generation started");
 
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
   try {
     // Simple security check
-    const triggerSecret = event.headers["x-netlify-trigger"];
+    const triggerSecret = request.headers.get("x-netlify-trigger");
     if (triggerSecret !== (process.env.NETLIFY_TRIGGER_SECRET || "internal")) {
-      return { statusCode: 403, body: "Forbidden" };
+      return NextResponse.json({ statusCode: 403, body: "Forbidden" });
     }
 
     const active = await convex.query(api.videoData.getActiveRenders);
@@ -114,57 +115,57 @@ export const handler = async (event, context) => {
       5000
     ); */
 
-    
-    const { renderId, bucketName} = await renderMediaOnLambda({
-          region: "us-east-1",
-          functionName: process.env.REMOTION_LAMBDA_FUNCTION,
-          serveUrl: process.env.REMOTION_SERVE_URL,
-          composition: "youtubeShort",
-          codec: "h264",
-          framesPerLambda: 18, // Good balance
-          memorySizeInMb: 2048, // Enough for your effects
-          concurrencyPerLambda: 1, // Keeps memory predictable
-          timeoutInMilliseconds: 120000, // 2 min safety buffer
-          maxRetries: 1,
-          timeoutInMilliseconds: 900000,
-          inputProps: {
-            videoData: {
-              audioUrl: nextVideo.audioUrl,
-              captionJson: nextVideo.captionJson,
-              images: prefetchedImages,
-              caption: nextVideo.caption,
-              musicTrack: nextVideo.musicTrack,
-              config: nextVideo.config,
-              volume: nextVideo.volume,
-            },
-          },
-          webhook: {
-            url: `${process.env.NEXTAUTH_URL}/api/remotion-webhook`,
-            secret: null,
-            customData: {
-              recordId: nextVideo._id,
-            },
-          },
-          downloadBehavior: {
-            type: "download",
-            fileName: `${nextVideo.title}.mp4`,
-          },
-        })
+    const { renderId, bucketName } = await renderMediaOnLambda({
+      region: "us-east-1",
+      functionName: process.env.REMOTION_LAMBDA_FUNCTION,
+      serveUrl: process.env.REMOTION_SERVE_URL,
+      composition: "youtubeShort",
+      codec: "h264",
+      framesPerLambda: 18, // Good balance
+      memorySizeInMb: 2048, // Enough for your effects
+      concurrencyPerLambda: 1, // Keeps memory predictable
+      timeoutInMilliseconds: 120000, // 2 min safety buffer
+      maxRetries: 1,
+      timeoutInMilliseconds: 900000,
+      inputProps: {
+        videoData: {
+          audioUrl: nextVideo.audioUrl,
+          captionJson: nextVideo.captionJson,
+          images: prefetchedImages,
+          caption: nextVideo.caption,
+          musicTrack: nextVideo.musicTrack,
+          config: nextVideo.config,
+          volume: nextVideo.volume,
+        },
+      },
+
+      webhook: {
+        url: `${process.env.NEXTAUTH_URL}/api/remotion-webhook`,
+        secret: null,
+        customData: {
+          recordId: nextVideo._id,
+        },
+      },
+      downloadBehavior: {
+        type: "download",
+        fileName: `${nextVideo.title}.mp4`,
+      },
+    });
 
     await convex.mutation(api.videoData.startRendering, {
       videoId: nextVideo._id,
       renderId,
-      bucketName
+      bucketName,
     });
 
     console.log(`Video render initiated for: ${nextVideo._id}`);
-    return {
+    return NextResponse.json({
       statusCode: 200,
       body: JSON.stringify({
         message: "Video render initiated",
         videoId: nextVideo._id,
       }),
-    };
+    });
   } catch (error) {
     console.error("Background function error:", error);
 
@@ -182,9 +183,9 @@ export const handler = async (event, context) => {
       console.error("Failed to update video status:", e);
     }
 
-    return {
+    return NextResponse.json({
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
-    };
+    });
   }
-};
+}

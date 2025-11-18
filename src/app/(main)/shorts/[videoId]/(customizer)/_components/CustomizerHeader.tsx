@@ -10,6 +10,7 @@ import { QueueVideo } from "@/actions/generateVideo";
 import { useState } from "react";
 import { Id } from "@/../convex/_generated/dataModel";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabItems } from "../config";
 
@@ -18,6 +19,7 @@ const CustomizerHeader = ({ activeTab, onTabChange, videoData }: { activeTab: st
 
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { data: session } = useSession(); // Call useSession at the top level
 
   const lastModified = videoData?.lastModified;
   const renderStartedAt = videoData?.renderStartedAt;
@@ -29,17 +31,42 @@ const CustomizerHeader = ({ activeTab, onTabChange, videoData }: { activeTab: st
 
   const handleRender = async () => {
     setLoading(true);
-    const result = await QueueVideo(videoData._id as Id<"videoData">);
-    setLoading(false);
-    if (result.ok) {
-      toast({
-        title: "Success",
-        description: "Video queued for processing",
-      });
+    const userId = session?.user?._id; // Get userId as string | undefined
+    const videoId = videoData?._id; // Get videoId as string | undefined
+
+    // Only call QueueVideo if userId and videoId are available
+    if (userId && videoId) {
+      try {
+        // Assuming Id<"users"> can accept a string directly or is compatible
+        const result = await QueueVideo(videoId as Id<"videoData">, userId as Id<"users">);
+        if (result.ok) {
+          toast({
+            title: "Success",
+            description: "Video queued for processing",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error queuing video:", error);
+        toast({
+          title: "Error",
+          description: "Failed to queue video. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     } else {
+      // Handle case where userId or videoId is not available
+      setLoading(false); // Ensure loading is false here too
       toast({
         title: "Error",
-        description: result.error,
+        description: "User ID or Video ID not found. Please log in or ensure video data is loaded.",
         variant: "destructive",
       });
     }
@@ -99,4 +126,4 @@ const CustomizerHeader = ({ activeTab, onTabChange, videoData }: { activeTab: st
   );
 };
 
-export default CustomizerHeader;
+export default CustomizerHeader
