@@ -121,7 +121,7 @@ export const handler = async (event, context) => {
           serveUrl: process.env.REMOTION_SERVE_URL,
           composition: "youtubeShort",
           codec: "h264",
-          framesPerLambda: 18, // Good balance
+          framesPerLambda: 150, // Good balance
           inputProps: {
             videoData: {
               audioUrl: nextVideo.audioUrl,
