@@ -4,7 +4,7 @@
   publish = ".next"
 
 [functions]
-  external_node_modules = ["@remotion/cloudrun", "convex"]
+  external_node_modules = ["@remotion/cloudrun", "convex", '@remotion/lambda']
   included_files = ["convex/_generated/**", "convex/**", "src/**"]
   node_bundler = "esbuild"
 
