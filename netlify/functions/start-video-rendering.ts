@@ -122,11 +122,6 @@ export const handler = async (event, context) => {
           composition: "youtubeShort",
           codec: "h264",
           framesPerLambda: 18, // Good balance
-          memorySizeInMb: 2048, // Enough for your effects
-          concurrencyPerLambda: 1, // Keeps memory predictable
-          timeoutInMilliseconds: 120000, // 2 min safety buffer
-          maxRetries: 1,
-          timeoutInMilliseconds: 900000,
           inputProps: {
             videoData: {
               audioUrl: nextVideo.audioUrl,
