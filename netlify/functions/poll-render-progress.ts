@@ -102,11 +102,6 @@ async function pollRenderProgress() {
 export default async (event: any, context: any) => {
   // Optional: Add a security check if this function is triggered externally
   // For example, using a Netlify Trigger secret.
-  const triggerSecret = event.headers["x-netlify-trigger"];
-  if (triggerSecret !== (process.env.NETLIFY_TRIGGER_SECRET || "internal")) {
-    console.warn("Unauthorized access to poll-render-progress function.");
-    return { statusCode: 403, body: "Forbidden" };
-  }
 
   await pollRenderProgress();
 
