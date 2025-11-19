@@ -1,11 +1,11 @@
 // netlify/functions/process-completed-render.ts
 
 import { ConvexHttpClient } from "convex/browser";
-import { NextResponse } from "next/server";
-import { api } from "@/../convex/_generated/api"; // Assuming this path is correct for Netlify functions
+import { api } from "@/../convex/_generated/api";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { deleteRender } from "@remotion/lambda/client";
 import { Id } from "../../convex/_generated/dataModel";
+import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 
 // Initialize R2 client
 const r2Client = new S3Client({
@@ -18,21 +18,39 @@ const r2Client = new S3Client({
   forcePathStyle: true,
 });
 
-export const handler = async (request: Request) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
   
-  let payload: any; // Explicitly type payload as any for now
+  let payload: any;
 
   try {
-    payload = await request.json();
+    // Parse the body string to JSON
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "No body provided" })
+      };
+    }
+
+    payload = JSON.parse(event.body);
     console.log("Received payload for processing completed render:", payload);
 
-    const { recordId, outputFile, bucketName, renderId, customData } = payload as { recordId: string; outputFile: string; bucketName: string; renderId: string; customData: { recordId: string; }; };
+    const { outputFile, bucketName, renderId, customData } = payload as { 
+      outputFile: string; 
+      bucketName: string; 
+      renderId: string; 
+      customData: { recordId: string; }; 
+    };
 
-    if (!recordId || !outputFile || !bucketName || !renderId || !customData?.recordId) {
+    if (!outputFile || !bucketName || !renderId || !customData?.recordId) {
         console.error("❌ Missing required data in payload for processing completed render.");
-        return NextResponse.json({ error: "Missing required data in payload" }, { status: 400 });
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: "Missing required data in payload" })
+        };
     }
+
+    const { recordId } = customData;
 
     // Step 1: Download from Lambda S3
     console.log(`⬇️ Downloading from Lambda S3: ${outputFile}`);
@@ -47,7 +65,7 @@ export const handler = async (request: Request) => {
     console.log(`✅ Downloaded video: ${videoSizeMB} MB`);
     
     // Step 2: Upload to R2
-    const videoKey = `videos/${recordId}.mp4`; // Use recordId from payload
+    const videoKey = `videos/${recordId}.mp4`;
     console.log(`⬆️ Uploading to R2: ${videoKey}`);
     
     await r2Client.send(new PutObjectCommand({
@@ -55,7 +73,7 @@ export const handler = async (request: Request) => {
       Key: videoKey,
       Body: new Uint8Array(videoBuffer),
       ContentType: "video/mp4",
-      CacheControl: "public, max-age=31536000", // Cache for 1 year
+      CacheControl: "public, max-age=31536000",
     }));
     
     console.log(`✅ Successfully uploaded to R2`);
@@ -65,7 +83,7 @@ export const handler = async (request: Request) => {
     
     // Step 4: Update Convex with video URL and status
     await convex.mutation(api.videoData.UpdateVideoRecord, {
-      recordId: recordId as Id<"videoData">, // Use recordId from payload and cast to Id<"videoData">
+      recordId: recordId as Id<"videoData">,
       status: "Completed",
       downloadUrl: publicUrl,
       renderProgress: 100
@@ -76,14 +94,13 @@ export const handler = async (request: Request) => {
     // Step 5: Delete from Lambda S3 (save costs)
     try {
       await deleteRender({
-        region: "us-east-1", // Assuming this region is consistent
-        bucketName: bucketName, // Use bucketName from payload
-        renderId: renderId,     // Use renderId from payload
+        region: "us-east-1",
+        bucketName: bucketName,
+        renderId: renderId,
       });
       console.log(`🗑️ Deleted render from Lambda S3`);
     } catch (deleteError) {
       console.error("⚠️ Failed to delete from Lambda:", deleteError);
-      // Don't fail the entire process if cleanup fails, video is already in R2
     }
 
     // Step 6: Trigger next video in queue
@@ -101,17 +118,20 @@ export const handler = async (request: Request) => {
       console.error("Failed to trigger next video:", e);
     }
 
-    return NextResponse.json({ 
-      message: "Video successfully processed and uploaded to R2",
-      videoUrl: publicUrl,
-      size: `${videoSizeMB} MB`
-    }, { status: 200 });
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ 
+        message: "Video successfully processed and uploaded to R2",
+        videoUrl: publicUrl,
+        size: `${videoSizeMB} MB`
+      })
+    };
     
   } catch (error) {
     console.error("❌ Error processing completed render:", error);
     
     // Attempt to update status to failed in Convex if recordId is available
-    const recordId = payload?.customData?.recordId; // Safely access recordId
+    const recordId = payload?.customData?.recordId;
     if (recordId) {
         try {
             await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
@@ -124,9 +144,12 @@ export const handler = async (request: Request) => {
         }
     }
     
-    return NextResponse.json({ 
-      error: "Failed to process completed render",
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: "Failed to process completed render",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
   }
 }
