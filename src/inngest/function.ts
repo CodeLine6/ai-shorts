@@ -257,18 +257,18 @@ export const GenerateVideoData = inngest.createFunction(
             let imagen3Error = false;
 
             const preferredModel =
-              process.env.IMAGE_GEN_MODEL || "provider-4/imagen-3";
+              process.env.IMAGE_GEN_MODEL || "provider-4/imagen-3.5";
 
             // Try preferred model first
-            if (preferredModel === "provider-4/imagen-3") {
+            if (preferredModel === "provider-4/imagen-3.5") {
               try {
                 console.log(
-                  `Generating image ${index + 1} with Imagen 3:`,
+                  `Generating image ${index + 1} with Imagen 3.5:`,
                   prompt.imagePrompt
                 );
 
                 const imagen3Request = await a4fClient.images.generate({
-                  model: "provider-4/imagen-3",
+                  model: "provider-4/imagen-3.5",
                   prompt: prompt.imagePrompt,
                   response_format: "b64_json",
                   output_compression: 50,
@@ -277,7 +277,7 @@ export const GenerateVideoData = inngest.createFunction(
 
                 base64 = imagen3Request.data?.[0]?.b64_json;
               } catch (error) {
-                console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+                console.log(`Imagen 3.5 failed for image ${index + 1}:`, error);
                 imagen3Error = true;
               }
             } else if (preferredModel === "provider-4/imagen-4") {
@@ -312,9 +312,9 @@ export const GenerateVideoData = inngest.createFunction(
             // Fallback to the other model if the preferred model fails
             if (!base64) {
               const fallbackModel =
-                preferredModel === "provider-4/imagen-3"
+                preferredModel === "provider-4/imagen-3.5"
                   ? "provider-4/imagen-4"
-                  : "provider-4/imagen-3";
+                  : "provider-4/imagen-3.5";
 
               if (fallbackModel === "provider-4/imagen-4") {
                 try {
@@ -346,12 +346,12 @@ export const GenerateVideoData = inngest.createFunction(
               } else {
                 try {
                   console.log(
-                    `Falling back to Imagen 3 for image ${index + 1}:`,
+                    `Falling back to Imagen 3.5 for image ${index + 1}:`,
                     prompt.imagePrompt
                   );
 
                   const imagen3Request = await a4fClient.images.generate({
-                    model: "provider-4/imagen-3",
+                    model: "provider-4/imagen-3.5",
                     prompt: prompt.imagePrompt,
                     response_format: "b64_json",
                     output_compression: 50,
