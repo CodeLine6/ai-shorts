@@ -46,28 +46,33 @@ export const GenerateVideoData = inngest.createFunction(
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId,
         status: "Failed",
-        comments: `Inngest function failed: ${error.message}`
+        comments: `Inngest function failed: ${error.message}`,
       });
     },
   },
   { event: "generate-video-data" },
 
   async ({ event, step }) => {
-    const { title, script, videoStyle, voice, recordId, audioUrl, userId } = event.data;
+    const { title, script, videoStyle, voice, recordId, audioUrl, userId } =
+      event.data;
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
     // Deduct credits for asset generation
     await step.run("DeductCreditsForAssetGeneration", async () => {
       try {
+        if (!userId) {
+          throw new Error("User ID is required for credit deduction");
+        }
+
         await convex.mutation(api.user.AdjustUserCredits, {
           userId,
-          amount: -30, // Deduct 30 credits for collective asset generation
+          amount: -30,
         });
       } catch (error: any) {
         await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
           recordId,
           status: "Failed",
-          comments: `Credit deduction failed: ${error.message}`
+          comments: `Credit deduction failed: ${error.message}`,
         });
         throw new Error(`Credit deduction failed: ${error.message}`);
       }
@@ -77,14 +82,14 @@ export const GenerateVideoData = inngest.createFunction(
     const GenerateAudioFile = await step.run("GenerateAudioFile", async () => {
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId,
-        status: "Generating Audio File"
+        status: "Generating Audio File",
       });
 
       if (audioUrl) {
         return {
           fileName: audioUrl.split("/").pop(),
           filePath: audioUrl,
-        }
+        };
       }
 
       const VOICE_ID = voice.voiceId;
@@ -143,7 +148,6 @@ export const GenerateVideoData = inngest.createFunction(
           fileName,
           filePath: publicUrlData.publicUrl, // Store the public URL
         };
-
       } catch (error: any) {
         console.log("ElevenLabs API error:", error);
 
@@ -153,10 +157,9 @@ export const GenerateVideoData = inngest.createFunction(
 
     // Generate Captions
     const GenerateCaptions = await step.run("GenerateCaptions", async () => {
-
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId,
-        status: "Generating Captions"
+        status: "Generating Captions",
       });
 
       try {
@@ -181,7 +184,6 @@ export const GenerateVideoData = inngest.createFunction(
         ).data;
 
         if (!postTranscriptionResponse.result_url) {
-
           throw new Error(
             `Gladia API returned invalid result_url: ${postTranscriptionResponse.result_url}`
           );
@@ -192,29 +194,30 @@ export const GenerateVideoData = inngest.createFunction(
         );
 
         return subtitles;
-      }
-
-      catch (error) {
+      } catch (error) {
         throw new Error(
           `Error generating captions for record ${recordId}: ${error}`
         );
       }
-
     });
 
     // Generate Image Prompt from Script
     const GenerateImagePrompt = await step.run(
       "GenerateImagePrompt",
       async () => {
-
         await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
           recordId,
-          status: "Generating Image Prompts"
+          status: "Generating Image Prompts",
         });
 
         try {
-          const FINAL_PROMPT = ImagePrompt.replace("{style}", videoStyle)
-            .replace("{script}", GenerateCaptions.result.transcription.full_transcript)
+          const FINAL_PROMPT = ImagePrompt.replace(
+            "{style}",
+            videoStyle
+          ).replace(
+            "{script}",
+            GenerateCaptions.result.transcription.full_transcript
+          );
 
           const result = await gemini.models.generateContentStream({
             model,
@@ -228,10 +231,7 @@ export const GenerateVideoData = inngest.createFunction(
           }
 
           return JSON.parse(prompts);
-        }
-
-        catch (error) {
-
+        } catch (error) {
           throw new Error(
             `Error generating image prompts for record ${recordId}: ${error}`
           );
@@ -243,66 +243,49 @@ export const GenerateVideoData = inngest.createFunction(
     const GenerateImages = await step.run("GenerateImages", async () => {
       await convex.mutation(api.videoData.UpdateVideoRecordStatus, {
         recordId,
-        status: "Generating Images"
+        status: "Generating Images",
       });
 
-
       const imageResults = await Promise.all(
-        GenerateImagePrompt.map(async (prompt: { imagePrompt: string; sceneContent: string }, index: number) => {
-          let base64 ;
-          let imagen4Error = false;
-          let imagen3Error = false;
+        GenerateImagePrompt.map(
+          async (
+            prompt: { imagePrompt: string; sceneContent: string },
+            index: number
+          ) => {
+            let base64;
+            let imagen4Error = false;
+            let imagen3Error = false;
 
-          const preferredModel = process.env.IMAGE_GEN_MODEL || "provider-4/imagen-3";
+            const preferredModel =
+              process.env.IMAGE_GEN_MODEL || "provider-4/imagen-3";
 
-          // Try preferred model first
-          if (preferredModel === "provider-4/imagen-3") {
-            try {
-              console.log(`Generating image ${index + 1} with Imagen 3:`, prompt.imagePrompt);
-
-              const imagen3Request = await a4fClient.images.generate({
-                model: "provider-4/imagen-3",
-                prompt: prompt.imagePrompt,
-                response_format: "b64_json",
-                output_compression: 50,
-                size: "1024x1792",
-              })
-
-              base64 = imagen3Request.data?.[0]?.b64_json
-            } catch (error) {
-              console.log(`Imagen 3 failed for image ${index + 1}:`, error);
-              imagen3Error = true;
-            }
-          } else if (preferredModel === "provider-4/imagen-4") {
-            try {
-              console.log(`Generating image ${index + 1} with Imagen 4:`, prompt.imagePrompt);
-
-              const imagen4Request = await a4fClient.images.generate({
-                model: "provider-4/imagen-4",
-                prompt: prompt.imagePrompt,
-                response_format: "b64_json",
-                output_compression: 50,
-                size: "1024x1792",
-              });
-
-              base64 = imagen4Request.data?.[0]?.b64_json;
-
-              if (!base64) {
-                throw new Error("Imagen 4 API returned no image data");
-              }
-            } catch (err: any) {
-              console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
-              imagen4Error = true
-            }
-          }
-
-          // Fallback to the other model if the preferred model fails
-          if (!base64) {
-            const fallbackModel = preferredModel === "provider-4/imagen-3" ? "provider-4/imagen-4" : "provider-4/imagen-3";
-
-            if (fallbackModel === "provider-4/imagen-4") {
+            // Try preferred model first
+            if (preferredModel === "provider-4/imagen-3") {
               try {
-                console.log(`Falling back to Imagen 4 for image ${index + 1}:`, prompt.imagePrompt);
+                console.log(
+                  `Generating image ${index + 1} with Imagen 3:`,
+                  prompt.imagePrompt
+                );
+
+                const imagen3Request = await a4fClient.images.generate({
+                  model: "provider-4/imagen-3",
+                  prompt: prompt.imagePrompt,
+                  response_format: "b64_json",
+                  output_compression: 50,
+                  size: "1024x1792",
+                });
+
+                base64 = imagen3Request.data?.[0]?.b64_json;
+              } catch (error) {
+                console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+                imagen3Error = true;
+              }
+            } else if (preferredModel === "provider-4/imagen-4") {
+              try {
+                console.log(
+                  `Generating image ${index + 1} with Imagen 4:`,
+                  prompt.imagePrompt
+                );
 
                 const imagen4Request = await a4fClient.images.generate({
                   model: "provider-4/imagen-4",
@@ -318,104 +301,164 @@ export const GenerateVideoData = inngest.createFunction(
                   throw new Error("Imagen 4 API returned no image data");
                 }
               } catch (err: any) {
-                console.log(`Imagen 4 also failed for image ${index + 1}:`, err)
-                imagen4Error = true
+                console.log(
+                  `Imagen 4 also failed for image ${index + 1}:`,
+                  err
+                );
+                imagen4Error = true;
               }
-            } else {
+            }
+
+            // Fallback to the other model if the preferred model fails
+            if (!base64) {
+              const fallbackModel =
+                preferredModel === "provider-4/imagen-3"
+                  ? "provider-4/imagen-4"
+                  : "provider-4/imagen-3";
+
+              if (fallbackModel === "provider-4/imagen-4") {
+                try {
+                  console.log(
+                    `Falling back to Imagen 4 for image ${index + 1}:`,
+                    prompt.imagePrompt
+                  );
+
+                  const imagen4Request = await a4fClient.images.generate({
+                    model: "provider-4/imagen-4",
+                    prompt: prompt.imagePrompt,
+                    response_format: "b64_json",
+                    output_compression: 50,
+                    size: "1024x1792",
+                  });
+
+                  base64 = imagen4Request.data?.[0]?.b64_json;
+
+                  if (!base64) {
+                    throw new Error("Imagen 4 API returned no image data");
+                  }
+                } catch (err: any) {
+                  console.log(
+                    `Imagen 4 also failed for image ${index + 1}:`,
+                    err
+                  );
+                  imagen4Error = true;
+                }
+              } else {
+                try {
+                  console.log(
+                    `Falling back to Imagen 3 for image ${index + 1}:`,
+                    prompt.imagePrompt
+                  );
+
+                  const imagen3Request = await a4fClient.images.generate({
+                    model: "provider-4/imagen-3",
+                    prompt: prompt.imagePrompt,
+                    response_format: "b64_json",
+                    output_compression: 50,
+                    size: "1024x1792",
+                  });
+
+                  base64 = imagen3Request.data?.[0]?.b64_json;
+                } catch (error) {
+                  console.log(`Imagen 3 failed for image ${index + 1}:`, error);
+                  imagen3Error = true;
+                }
+              }
+            }
+
+            // Fallback to Stability AI if both Imagen 3 and Imagen 4 fail
+            if (!base64 || imagen4Error || imagen3Error) {
               try {
-                console.log(`Falling back to Imagen 3 for image ${index + 1}:`, prompt.imagePrompt);
+                console.log(
+                  `Falling back to Stability ai for image ${index + 1}:`,
+                  prompt.imagePrompt
+                );
 
-                const imagen3Request = await a4fClient.images.generate({
-                  model: "provider-4/imagen-3",
+                const stabilityAIRequest = await fetch(
+                  "https://free-image-generation-api.abhimanyutokas.workers.dev/",
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      prompt: prompt.imagePrompt,
+                      width: 1024,
+                      height: 1792,
+                      negative_prompt:
+                        "blurry, low quality, pixelated, distorted, text, watermark, signature, logo, bad anatomy, extra limbs, deformed hands, repetition",
+                    }),
+                  }
+                );
+
+                const blob = await stabilityAIRequest.blob();
+                base64 = await blob.arrayBuffer();
+
+                if (!base64) {
+                  throw new Error("Stability AI API returned no image data");
+                }
+              } catch (stabilityAIErr: any) {
+                console.log(
+                  `Stability AI also failed for image ${index + 1}:`,
+                  stabilityAIErr
+                );
+
+                // Log the full error details
+                console.log("Stability AI Details:", {
+                  message: stabilityAIErr.message,
+                  status: stabilityAIErr.status,
                   prompt: prompt.imagePrompt,
-                  response_format: "b64_json",
-                  output_compression: 50,
-                  size: "1024x1792",
-                })
+                  promptLength: prompt.imagePrompt.length,
+                });
 
-                base64 = imagen3Request.data?.[0]?.b64_json
-              } catch (error) {
-                console.log(`Imagen 3 failed for image ${index + 1}:`, error);
-                imagen3Error = true;
+                throw new Error(
+                  `Imagen 4, 3 and Stability AI failed for image ${index + 1}: ${stabilityAIErr.message}`
+                );
               }
             }
-          }
 
-          // Fallback to Stability AI if both Imagen 3 and Imagen 4 fail
-          if (!base64 || imagen4Error || imagen3Error) {
-            try {
-              console.log(`Falling back to Stability ai for image ${index + 1}:`, prompt.imagePrompt);
-
-              const stabilityAIRequest = await fetch("https://free-image-generation-api.abhimanyutokas.workers.dev/", {
-                method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${process.env.STABILITY_API_KEY}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  prompt: prompt.imagePrompt,
-                  width: 1024,
-                  height: 1792,
-                  negative_prompt: "blurry, low quality, pixelated, distorted, text, watermark, signature, logo, bad anatomy, extra limbs, deformed hands, repetition"
-                }),
-              });
-
-              const blob = await stabilityAIRequest.blob();
-              base64 = await blob.arrayBuffer();
-
-              if (!base64) {
-                throw new Error("Stability AI API returned no image data");
-              }
-            } catch (stabilityAIErr: any) {
-              console.log(`Stability AI also failed for image ${index + 1}:`, stabilityAIErr);
-
-              // Log the full error details
-              console.log("Stability AI Details:", {
-                message: stabilityAIErr.message,
-                status: stabilityAIErr.status,
-                prompt: prompt.imagePrompt,
-                promptLength: prompt.imagePrompt.length
-              });
-
-              throw new Error(`Imagen 4, 3 and Stability AI failed for image ${index + 1}: ${stabilityAIErr.message}`);
+            // 🔥 UPLOAD IMMEDIATELY AFTER GENERATION
+            const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}-${index}.png`;
+            const imagePathInStorage = `${recordId}/images/${imageName}`;
+            let imageBuffer;
+            if (typeof base64 === "string") {
+              imageBuffer = Buffer.from(base64, "base64");
+            } else {
+              imageBuffer = Buffer.from(new Uint8Array(base64));
             }
+
+            // Upload image to Supabase Storage
+            const { data: uploadData, error: uploadError } =
+              await supabase.storage
+                .from("media")
+                .upload(imagePathInStorage, imageBuffer, {
+                  contentType: "image/png",
+                  upsert: false,
+                });
+
+            if (uploadError) {
+              throw new Error(
+                `Supabase image upload error: ${uploadError.message}`
+              );
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from("media")
+              .getPublicUrl(imagePathInStorage);
+
+            // 🔥 RETURN ONLY URLs AND METADATA (much smaller!)
+            return {
+              imageUrl: publicUrlData.publicUrl,
+              sceneContent: prompt.sceneContent,
+            };
           }
-
-          // 🔥 UPLOAD IMMEDIATELY AFTER GENERATION
-          const imageName = `${title.replace(/[^a-zA-Z0-9]/g, "_") || "image"}-${Date.now()}-${index}.png`;
-          const imagePathInStorage = `${recordId}/images/${imageName}`;
-          let imageBuffer;
-          if (typeof base64 === "string") {
-            imageBuffer = Buffer.from(base64, "base64");
-          } else {
-            imageBuffer = Buffer.from(new Uint8Array(base64));
-          }
-
-          // Upload image to Supabase Storage
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("media")
-            .upload(imagePathInStorage, imageBuffer, {
-              contentType: "image/png",
-              upsert: false,
-            });
-
-          if (uploadError) {
-            throw new Error(`Supabase image upload error: ${uploadError.message}`);
-          }
-
-          const { data: publicUrlData } = supabase.storage
-            .from("media")
-            .getPublicUrl(imagePathInStorage);
-
-          // 🔥 RETURN ONLY URLs AND METADATA (much smaller!)
-          return {
-            imageUrl: publicUrlData.publicUrl,
-            sceneContent: prompt.sceneContent,
-          };
-        })
+        )
       );
 
-      console.log(`Successfully generated and uploaded ${imageResults.length} images`);
+      console.log(
+        `Successfully generated and uploaded ${imageResults.length} images`
+      );
       return imageResults; // ✅ Only URLs now, much smaller!
     });
 
@@ -425,14 +468,22 @@ export const GenerateVideoData = inngest.createFunction(
           const relatedTranscript =
             GenerateCaptions.result.transcription.utterances.filter(
               ({ text }: utterance) => {
-                return sceneContent
-                  .toLowerCase()
-                  .includes(text.toLowerCase()) || text.toLowerCase().includes(sceneContent.toLowerCase());
+                return (
+                  sceneContent.toLowerCase().includes(text.toLowerCase()) ||
+                  text.toLowerCase().includes(sceneContent.toLowerCase())
+                );
               }
             );
 
-          const start = index === 0 ? 0 : relatedTranscript[0]?.start ? parseFloat((relatedTranscript[0]?.start).toFixed(3)) : 0;
-          const end = parseFloat((relatedTranscript[relatedTranscript.length - 1]?.end).toFixed(3));
+          const start =
+            index === 0
+              ? 0
+              : relatedTranscript[0]?.start
+                ? parseFloat((relatedTranscript[0]?.start).toFixed(3))
+                : 0;
+          const end = parseFloat(
+            (relatedTranscript[relatedTranscript.length - 1]?.end).toFixed(3)
+          );
 
           const duration = parseFloat((end - start).toFixed(3));
           console.log(`Duration `, duration, " Start: ", start, " End: ", end);
@@ -462,13 +513,12 @@ export const GenerateVideoData = inngest.createFunction(
           script: GenerateCaptions.result.transcription.full_transcript,
           status: "Ready",
         });
-      }
-      catch (error: any) {
+      } catch (error: any) {
         console.log("Error saving to database:", error);
         throw new Error(`Error saving to database: ${error.message}`);
       }
     });
 
-    return SaveToDatabase// The main function will return the result of RenderVideo step
-  },
+    return SaveToDatabase; // The main function will return the result of RenderVideo step
+  }
 );

@@ -348,71 +348,82 @@ function Page() {
     }
 
     const GenerateVideo = async (): Promise<void> => {
-        if (user && user.credits <= 0) {
+    if (!user || !user._id) {
+    toast({
+        title: "Error",
+        description: "User session invalid. Please log in again.",
+        variant: "destructive",
+    });
+    return;
+}    
+    if (user && user.credits <= 0) {
+        toast({
+            title: "Error",
+            description: "You don't have enough credits to create a video",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        // Save to database
+        const resp = await CreateInitialVideoRecord({
+            title: formData.title.value,
+            topic: formData.topic.value,
+            videoStyle: formData.videoStyle.value,
+            caption: formData.captionStyle.value,
+            voice: formData.voice.value,
+            //@ts-ignore
+            uid: user._id,
+            createdBy: user?.email || "Unknown",
+        });
+        
+        const newAudioUrl = formData.audioUrl.value 
+            ? await moveSupabaseFile(formData.title.value, formData.audioUrl.value, resp) 
+            : '';
+
+        const payload = {
+            ...Object.fromEntries(
+                Object.entries(formData).map(([key, val]) => [key, val.value])
+            ),
+            audioUrl: newAudioUrl,
+            recordId: resp,
+            userId: user._id, // ✅ ADD THIS LINE - Pass the userId to Inngest
+        };
+
+        const result = await axios.post('/api/generate-video-data', payload);
+
+        if (result.data?.error) {
             toast({
                 title: "Error",
-                description: "You don't have enough credits to create a video",
+                description: result.data.error,
                 variant: "destructive",
             });
             return;
         }
 
-        setLoading(true);
+        toast({
+            title: "Success",
+            description: "Video generation in progress. Check your dashboard for updates.",
+        });
 
-        try {
-            // Save to database
-            const resp = await CreateInitialVideoRecord({
-                title: formData.title.value,
-                topic: formData.topic.value,
-                videoStyle: formData.videoStyle.value,
-                caption: formData.captionStyle.value,
-                voice: formData.voice.value,
-                //@ts-ignore
-                uid: user._id,
-                createdBy: user?.email || "Unknown",
-            });
-            
-            const newAudioUrl = formData.audioUrl.value ? await moveSupabaseFile(formData.title.value,formData.audioUrl.value, resp) : '';
+        // Redirect to video page
+        router.push(`/dashboard`);
 
-            const payload = {
-                ...Object.fromEntries(
-                Object.entries(formData).map(([key, val]) => [key, val.value])
-                ),
-                audioUrl: newAudioUrl, // directly override instead of nesting
-                recordId: resp,
-            };
-
-            const result = await axios.post('/api/generate-video-data', payload);
-
-            if (result.data?.error) {
-                toast({
-                    title: "Error",
-                    description: result.data.error,
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            toast({
-                title: "Success",
-                description: "Video generation in progress. Check your dashboard for updates.",
-            });
-
-            // Redirect to video page
-            router.push(`/dashboard`);
-
-            console.log(result);
-        } catch (error) {
-            console.error('Error generating video:', error);
-            toast({
-                title: "Error",
-                description: "Failed to generate video. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
+        console.log(result);
+    } catch (error) {
+        console.error('Error generating video:', error);
+        toast({
+            title: "Error",
+            description: "Failed to generate video. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setLoading(false);
     }
+}
 
     return (
         <div>
