@@ -4,12 +4,12 @@ import Volume from "@/components/Volume";
 
 const Music = ({
   customizeVideo,
-  effectsData,
+  volumeData,
 }: {
   customizeVideo: (property: string, value: any) => void;
-  effectsData: any;
+  volumeData: { backgroundMusic: number; voice: number } | undefined;
 }) => {
-  const volumes = effectsData.volume
+  const volumes = volumeData
   const updateVolume = (type: "backgroundMusic" | "voice") => {
     
     return (value: number) => {
@@ -26,8 +26,8 @@ const Music = ({
         className="flex-grow"
       />
       <div className="flex pt-5 gap-2">
-        <Volume Icon={Music2} volume={volumes.backgroundMusic} orientation="vertical" updateVolume={updateVolume("backgroundMusic")}  />
-        <Volume Icon={MicVocal} volume={volumes.voice} orientation="vertical" updateVolume={updateVolume("voice")} />
+        <Volume Icon={Music2} volume={volumes?.backgroundMusic} orientation="vertical" updateVolume={updateVolume("backgroundMusic")}  />
+        <Volume Icon={MicVocal} volume={volumes?.voice} orientation="vertical" updateVolume={updateVolume("voice")} />
       </div>
     </div>
   );
